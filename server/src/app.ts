@@ -1,6 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { createResponse } from './utils/api-response.js';
 import authRoutes from './routes/auth.routes.js';
+import cityRoutes from './routes/city.routes.js';
+import activityRoutes from './routes/activity.routes.js';
+import destinationRoutes from './routes/destination.routes.js';
 
 const app = express();
 
@@ -24,6 +27,10 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/cities', cityRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/destinations', destinationRoutes);
+
 
 
 app.use((_req: Request, res: Response) => {
