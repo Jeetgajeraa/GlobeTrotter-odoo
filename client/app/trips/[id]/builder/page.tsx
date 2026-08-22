@@ -141,8 +141,7 @@ export default function ItineraryBuilderPage() {
       return [];
     },
   });
-  const availableCities = citiesData || [];
-  const availableCities = citiesData || [];
+  const availableCities: City[] = citiesData || [];
 
   const { data: activitiesData } = useQuery({
     queryKey: ["activities", activeStop?.cityId],
@@ -157,8 +156,7 @@ export default function ItineraryBuilderPage() {
       return [];
     },
   });
-  const availableActivities = activitiesData || [];
-  const availableActivities = activitiesData || [];
+  const availableActivities: Activity[] = activitiesData || [];
 
   /* ── Computed Overall Trip Metrics ── */
   const totalDays = useMemo(() => {
