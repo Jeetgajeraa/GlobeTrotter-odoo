@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import { createResponse } from '../utils/api-response.js';
+import { ActivityCategory } from '../../generated/prisma/enums.js';
 
 // Helper to check trip ownership
 const verifyTripOwnership = async (
@@ -300,6 +301,12 @@ export const deleteStop = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    const existingStop = await prisma.stop.findUnique({ where: { id: stopId } });
+    if (!existingStop) {
+      res.status(200).json(createResponse(true, 'Stop already removed from itinerary', null));
+      return;
+    }
+
     await prisma.stop.delete({ where: { id: stopId } });
 
     res.status(200).json(createResponse(true, 'Stop removed from itinerary successfully', null));
@@ -382,17 +389,57 @@ export const addStopActivity = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const { activityId, scheduledDate, startTime, order, costOverride } = req.body;
+    const {
+      activityId,
+      customName,
+      name,
+      category,
+      cost,
+      durationMin,
+      scheduledDate,
+      startTime,
+      order,
+      costOverride,
+    } = req.body;
 
-    if (!activityId || !scheduledDate) {
-      res.status(400).json(createResponse(false, 'activityId and scheduledDate are required', null));
+    if (!scheduledDate) {
+      res.status(400).json(createResponse(false, 'scheduledDate is required', null));
       return;
     }
 
-    const activity = await prisma.activity.findUnique({ where: { id: activityId } });
-    if (!activity) {
-      res.status(404).json(createResponse(false, 'Activity not found', null));
-      return;
+    let targetActivityId = activityId ? String(activityId).trim() : null;
+
+    if (targetActivityId) {
+      const existingActivity = await prisma.activity.findUnique({
+        where: { id: targetActivityId },
+      });
+      if (!existingActivity) {
+        targetActivityId = null;
+      }
+    }
+
+    if (!targetActivityId) {
+      const activityTitle = (customName || name || 'Custom Experience')?.trim();
+
+      let validCategory: ActivityCategory = ActivityCategory.OTHER;
+      if (category) {
+        const catStr = String(category).toUpperCase();
+        if (Object.values(ActivityCategory).includes(catStr as any)) {
+          validCategory = catStr as ActivityCategory;
+        }
+      }
+
+      const newActivity = await prisma.activity.create({
+        data: {
+          cityId: stop.cityId,
+          name: activityTitle,
+          category: validCategory,
+          cost: cost !== undefined ? parseFloat(String(cost)) : (costOverride !== undefined ? parseFloat(String(costOverride)) : 0),
+          durationMin: durationMin ? parseInt(String(durationMin)) : 60,
+        },
+      });
+
+      targetActivityId = newActivity.id;
     }
 
     const parsedDate = new Date(scheduledDate);
@@ -414,7 +461,7 @@ export const addStopActivity = async (req: Request, res: Response): Promise<void
     const stopActivity = await prisma.stopActivity.create({
       data: {
         stopId,
-        activityId,
+        activityId: targetActivityId,
         scheduledDate: parsedDate,
         startTime: startTime ? String(startTime).trim() : null,
         order: finalOrder,

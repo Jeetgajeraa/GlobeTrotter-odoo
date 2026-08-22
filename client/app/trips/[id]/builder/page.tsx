@@ -108,41 +108,7 @@ export default function ItineraryBuilderPage() {
     queryFn: async () => {
       const res = await getTripById(tripId);
       if (res?.success && res.data) return res.data;
-      // Fallback Trip object for demo/offline resilience
-      return {
-        id: tripId,
-        name: "My Grand Journey",
-        description: "A wonderful multi-city exploration.",
-        coverPhoto: "/dest_paris.png",
-        startDate: new Date().toISOString().split("T")[0],
-        endDate: new Date(Date.now() + 86400000 * 9).toISOString().split("T")[0],
-        isPublic: false,
-        createdAt: new Date().toISOString(),
-        stops: [
-          {
-            id: "stop-sample-1",
-            tripId,
-            cityId: "c-paris",
-            startDate: new Date().toISOString().split("T")[0],
-            endDate: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-            order: 1,
-            city: FALLBACK_CITIES[0],
-            stopActivities: [
-              {
-                id: "sa-1",
-                stopId: "stop-sample-1",
-                activityId: "a-4",
-                scheduledDate: new Date().toISOString().split("T")[0],
-                startTime: "16:30",
-                order: 1,
-                costOverride: 55,
-                activity: FALLBACK_ACTIVITIES[3],
-              },
-            ],
-          },
-        ],
-        expenses: [],
-      } as DetailedTrip;
+      return null;
     },
   });
 
@@ -168,21 +134,30 @@ export default function ItineraryBuilderPage() {
     queryKey: ["cities"],
     queryFn: async () => {
       const res = await getCities();
-      if (res?.success && res.data && res.data.length > 0) return res.data;
-      return FALLBACK_CITIES;
+      const raw = res?.data as any;
+      if (raw) {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.cities)) return raw.cities;
+      }
+      return [];
     },
   });
-  const availableCities = citiesData || FALLBACK_CITIES;
+  const availableCities = citiesData || [];
 
   const { data: activitiesData } = useQuery({
     queryKey: ["activities", activeStop?.cityId],
     queryFn: async () => {
-      const res = await getActivities({ cityId: activeStop?.cityId });
-      if (res?.success && res.data && res.data.length > 0) return res.data;
-      return FALLBACK_ACTIVITIES;
+      if (!activeStop?.cityId) return [];
+      const res = await getActivities({ cityId: activeStop.cityId });
+      const raw = res?.data as any;
+      if (raw) {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.activities)) return raw.activities;
+      }
+      return [];
     },
   });
-  const availableActivities = activitiesData || FALLBACK_ACTIVITIES;
+  const availableActivities = activitiesData || [];
 
   /* ── Computed Overall Trip Metrics ── */
   const totalDays = useMemo(() => {
@@ -299,7 +274,13 @@ export default function ItineraryBuilderPage() {
 
   const handleOpenAddActivity = (dayDate: string) => {
     setSelectedDayForActivity(dayDate);
-    setPickedActivityId(availableActivities[0]?.id || "");
+    if (availableActivities && availableActivities.length > 0) {
+      setActivityMode("catalog");
+      setPickedActivityId(availableActivities[0].id);
+    } else {
+      setActivityMode("custom");
+      setPickedActivityId("");
+    }
     setCustomTitle("");
     setActivityTime("10:00");
     setIsAddActivityModalOpen(true);
@@ -795,7 +776,7 @@ export default function ItineraryBuilderPage() {
                   onChange={(e) => setNewStopCityId(e.target.value)}
                   className="w-full bg-[#F1EDE6] border border-transparent rounded-xl px-4 py-2.5 text-[14px] text-[#241B2F] outline-none hover:border-[#D6CCBC] focus:border-[#714B67] focus:bg-white"
                 >
-                  {availableCities.map((city) => (
+                  {availableCities.map((city: City) => (
                     <option key={city.id} value={city.id}>
                       {city.name}, {city.country}
                     </option>
@@ -906,28 +887,42 @@ export default function ItineraryBuilderPage() {
                   <label className="block text-[12px] font-bold text-[#241B2F] uppercase tracking-wider mb-1.5">
                     Select from Curated Experiences
                   </label>
-                  <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-                    {availableActivities.map((act) => {
-                      const isPicked = pickedActivityId === act.id;
-                      return (
-                        <div
-                          key={act.id}
-                          onClick={() => setPickedActivityId(act.id)}
-                          className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                            isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
-                          }`}
-                        >
-                          <div>
-                            <p className="text-[13px] font-bold text-[#241B2F]">{act.name}</p>
-                            <p className="text-[11px] text-[#5C5468] mt-0.5">{act.category} · ⏱ {act.durationMin} mins</p>
+                  {availableActivities.length > 0 ? (
+                    <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                      {availableActivities.map((act: Activity) => {
+                        const isPicked = pickedActivityId === act.id;
+                        return (
+                          <div
+                            key={act.id}
+                            onClick={() => setPickedActivityId(act.id)}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                              isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
+                            }`}
+                          >
+                            <div>
+                              <p className="text-[13px] font-bold text-[#241B2F]">{act.name}</p>
+                              <p className="text-[11px] text-[#5C5468] mt-0.5">{act.category} · ⏱ {act.durationMin} mins</p>
+                            </div>
+                            <span className={`text-[12px] font-bold text-[#714B67] ${ibmPlexMono.className}`}>
+                              ${act.cost}
+                            </span>
                           </div>
-                          <span className={`text-[12px] font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                            ${act.cost}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-[#FAF8F5] border border-[#E7E0D4] rounded-xl text-center flex flex-col items-center gap-2">
+                      <p className="text-xs font-bold text-[#241B2F]">No curated activities found for this city</p>
+                      <p className="text-[11px] text-[#5C5468]">Switch to &quot;Custom Activity&quot; above to create your own experience!</p>
+                      <button
+                        type="button"
+                        onClick={() => setActivityMode("custom")}
+                        className="mt-1 px-3 py-1.5 bg-[#714B67] text-white text-[11px] font-semibold rounded-lg hover:bg-[#4E3347]"
+                      >
+                        Create Custom Activity →
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">

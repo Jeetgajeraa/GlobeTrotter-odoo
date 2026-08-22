@@ -451,7 +451,7 @@ function TripRow({
                   View
                 </Link>
                 <Link
-                  href={`/trips/${trip.id}/edit`}
+                  href={`/trips/${trip.id}`}
                   id={`trip-edit-${trip.id}`}
                   className="h-8 px-3 text-[13px] font-medium text-[#5C5468]
                     border border-[#E7E0D4] rounded-lg hover:border-[#D6CCBC] hover:text-[#241B2F]
