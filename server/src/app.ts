@@ -14,7 +14,8 @@ import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -45,21 +46,15 @@ app.use('/api', sharedRoutes);
 app.use('/api', communityRoutes);
 app.use('/api', adminRoutes);
 
-
-
-
-
-
-
-
-
 app.use((_req: Request, res: Response) => {
   res.status(404).json(createResponse(false, 'Route not found', null));
 });
 
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Unhandled error:', err);
-  res.status(500).json(createResponse(false, 'Internal server error', null));
+  const message = err.message || 'Internal server error';
+  const statusCode = err.status || err.statusCode || (err.name === 'MulterError' ? 400 : 500);
+  res.status(statusCode).json(createResponse(false, message, null));
 });
 
 export { app };

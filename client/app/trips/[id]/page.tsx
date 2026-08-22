@@ -247,7 +247,7 @@ export default function TripItineraryViewPage() {
               <div className="flex items-center gap-2">
                 <span>💰</span>
                 <span className={`font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                  Est. Total ${totalCost}
+                  Est. Total ₹ {totalCost}
                 </span>
               </div>
             </div>

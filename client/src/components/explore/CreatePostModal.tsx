@@ -69,10 +69,10 @@ export function CreatePostModal({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Image size should be less than 10MB.",
+        description: "Image size should be less than 50MB.",
         variant: "destructive",
       });
       return;

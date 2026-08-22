@@ -359,10 +359,10 @@ function RegisterPanel({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Profile photo should be smaller than 5MB.",
+        description: "Profile photo should be smaller than 50MB.",
         variant: "destructive",
       });
       return;

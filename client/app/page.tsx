@@ -175,7 +175,7 @@ export default function LandingPage() {
               position: "relative",
               width: "100%",
               minHeight: 240,
-              borderRadius: "16px",
+              borderRadius: "10px",
               overflow: "hidden",
               marginBottom: 24,
               boxShadow: "0 4px 12px rgba(36,27,47,0.10)",
@@ -856,7 +856,7 @@ function RealCityCard({ city }: { city: City }) {
         onMouseLeave={() => setHovered(false)}
         style={{
           background: "#FFFFFF",
-          borderRadius: "14px",
+          borderRadius: "8px",
           overflow: "hidden",
           boxShadow: hovered ? "0 4px 12px rgba(36,27,47,0.10)" : "0 1px 2px rgba(36,27,47,0.04)",
           border: "1px solid #E7E0D4",
@@ -900,25 +900,6 @@ function RealCityCard({ city }: { city: City }) {
               {city.name.charAt(0)}
             </div>
           )}
-
-          {/* Cost badge */}
-          <span
-            style={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              background: badge.color,
-              color: "#fff",
-              fontFamily: "monospace",
-              fontSize: 11,
-              fontWeight: 600,
-              padding: "2px 8px",
-              borderRadius: "99px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-            }}
-          >
-            {badge.label}
-          </span>
         </div>
 
         {/* Info */}
@@ -995,7 +976,7 @@ function RealTripCard({ trip }: { trip: Trip }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: "#FFFFFF",
-        borderRadius: "14px",
+        borderRadius: "8px",
         overflow: "hidden",
         boxShadow: hovered ? "0 4px 12px rgba(36,27,47,0.10)" : "0 1px 2px rgba(36,27,47,0.04)",
         border: "1px solid #E7E0D4",
