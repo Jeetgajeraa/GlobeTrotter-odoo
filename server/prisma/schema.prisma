@@ -34,17 +34,22 @@ enum ExpenseCategory {
 
 model User {
   id            String    @id @default(cuid())
-  name          String
+  firstName     String
+  lastName      String
   email         String    @unique
   passwordHash  String
+  phoneNumber   String?
+  city          String?
+  country       String?
+  bio           String?   
   profilePhoto  String?
-  language      String    @default("en")
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   trips             Trip[]
   savedDestinations SavedDestination[]
+  communityPosts    CommunityPost[]
 
   @@map("users")
 }
@@ -55,8 +60,8 @@ model SavedDestination {
   cityId    String
   createdAt DateTime @default(now())
 
-  user City @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cityId])
   @@map("saved_destinations")
@@ -75,9 +80,10 @@ model Trip {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stops    Stop[]
-  expenses Expense[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stops          Stop[]
+  expenses       Expense[]
+  communityPosts CommunityPost[]
 
   @@index([userId])
   @@map("trips")
@@ -155,6 +161,27 @@ model StopActivity {
   @@index([activityId])
   @@map("stop_activities")
 }
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  userId    String
+  tripId    String?
+  title     String
+  content   String
+  imageUrl  String?
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip Trip? @relation(fields: [tripId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([tripId])
+  @@index([createdAt])
+  @@map("community_posts")
+}
+
 
 model Expense {
   id          String          @id @default(cuid())
