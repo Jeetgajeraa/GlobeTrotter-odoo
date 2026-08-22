@@ -251,11 +251,33 @@ export interface GetTripResponse extends BaseResponse {
 }
 
 export interface CitiesResponse extends BaseResponse {
-  data: City[] | null;
+  data:
+    | City[]
+    | {
+        cities: City[];
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
+      }
+    | null;
 }
 
 export interface ActivitiesResponse extends BaseResponse {
-  data: Activity[] | null;
+  data:
+    | Activity[]
+    | {
+        activities: Activity[];
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
+      }
+    | null;
 }
 
 export interface AddStopPayload {

@@ -61,6 +61,33 @@ export const createTrip = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    // ── One-trip-at-a-time rule ──────────────────────────────────────
+    // A user cannot create a new trip while they have an ongoing trip.
+    // They must wait for the current trip to end (endDate < now).
+    const now = new Date();
+    const ongoingTrip = await prisma.trip.findFirst({
+      where: {
+        userId,
+        startDate: { lte: now },
+        endDate:   { gte: now },
+      },
+      select: { id: true, name: true, endDate: true },
+    });
+
+    if (ongoingTrip) {
+      const endStr = ongoingTrip.endDate.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      res.status(409).json(
+        createResponse(
+          false,
+          `You already have an ongoing trip "${ongoingTrip.name}" (ends ${endStr}). Please complete it before creating a new trip.`,
+          { ongoingTripId: ongoingTrip.id, ongoingTripName: ongoingTrip.name }
+        )
+      );
+      return;
+    }
+
     // Cover photo from Cloudinary upload or optional URL string
     let finalCoverPhoto: string | null = null;
     if (req.file && (req.file as any).path) {
