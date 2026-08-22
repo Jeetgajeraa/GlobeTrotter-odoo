@@ -28,35 +28,48 @@
   --radius-lg: 20px;
 
   /* Shadow */
-  --shadow-card: 0 1px 2px rgba(36,27,47,0.04), 0 8px 24px rgba(36,27,47,0.06);
+  /* Shadows */
+  --shadow-card:   0 1px 2px rgba(36,27,47,0.04), 0 8px 24px rgba(36,27,47,0.06);
   --shadow-raised: 0 4px 12px rgba(36,27,47,0.10);
 
-  /* Typography */
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-
-  /* Background alias */
+  /* Legacy compat */
   --background: var(--color-paper);
   --foreground: var(--color-ink);
 }
 
-/* Override Next.js default dark mode so we stay light */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--color-paper);
-    --foreground: var(--color-ink);
-  }
+/* ─── Tailwind theme bridge ─── */
+@theme inline {
+  --color-background:      var(--color-paper);
+  --color-foreground:      var(--color-ink);
+  --color-paper:           #FAF8F5;
+  --color-surface:         #FFFFFF;
+  --color-surface-sunk:    #F1EDE6;
+  --color-ink:             #241B2F;
+  --color-ink-soft:        #5C5468;
+  --color-ink-faint:       #9A93A6;
+  --color-mulberry:        #714B67;
+  --color-mulberry-dark:   #4E3347;
+  --color-mulberry-tint:   #F1E7EE;
+  --color-route:           #E0663D;
+  --color-horizon:         #2F7A6F;
+  --color-sun:             #EFA928;
+  --color-danger:          #C0392B;
+  --color-line:            #E7E0D4;
+  --color-line-strong:     #D6CCBC;
+  --radius-sm:             8px;
+  --radius-md:             14px;
+  --radius-lg:             20px;
+  --font-sans:             var(--font-geist-sans);
+  --font-mono:             var(--font-geist-mono);
 }
 
+/* ─── Base resets ─── */
 *, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
+html, body {
+  height: 100%;
 }
 
 body {
