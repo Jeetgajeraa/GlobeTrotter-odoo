@@ -115,3 +115,78 @@ export async function getActivities(params?: {
     return err.response?.data as ActivitiesResponse;
   }
 }
+
+/**
+ * ──────────────────────────────────────────────
+ * ADMIN GETTERS (Screen 12)
+ * ──────────────────────────────────────────────
+ */
+
+export async function getAdminAnalytics() {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/admin/analytics`);
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+export async function getAdminPopularDestinations(limit: number = 10) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/admin/destinations/popular`, {
+      params: { limit },
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+export async function getAdminPopularActivities(limit: number = 10) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/admin/activities/popular`, {
+      params: { limit },
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+export async function getAdminUsers(params: {
+  search?: string;
+  role?: string;
+  page?: number;
+  limit?: number;
+} = {}) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/admin/users`, {
+      params,
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+export async function getAdminAllTrips(params: {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+} = {}) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/admin/trips`, {
+      params,
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+

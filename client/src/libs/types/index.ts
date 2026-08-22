@@ -288,3 +288,124 @@ export interface AddStopActivityPayload {
 export interface StopActivityResponse extends BaseResponse {
   data: StopActivity | null;
 }
+
+/* ──────────────────────────────────────────────
+   Admin Panel (Screen 12) Types
+   ────────────────────────────────────────────── */
+export interface AdminAnalyticsData {
+  summary: {
+    totalUsers: number;
+    totalTrips: number;
+    totalStops: number;
+    totalStopActivities: number;
+    totalExpensesCount: number;
+    totalPlatformSpend: number;
+    totalCommunityPosts: number;
+    totalCities: number;
+    totalActivities: number;
+  };
+  tripStatusDistribution: {
+    ongoing: number;
+    upcoming: number;
+    completed: number;
+    total: number;
+  };
+  monthlyTrends: Array<{
+    month: string;
+    trips: number;
+    newUsers: number;
+  }>;
+}
+
+export interface AdminAnalyticsResponse extends BaseResponse {
+  data: AdminAnalyticsData | null;
+}
+
+export interface AdminPopularDestination {
+  id: string;
+  name: string;
+  country: string;
+  region: string | null;
+  costIndex: number;
+  popularity: number;
+  imageUrl: string | null;
+  tripsVisitedCount: number;
+  wishlistCount: number;
+  activitiesCount: number;
+  totalSpend: number;
+}
+
+export interface AdminPopularDestinationsResponse extends BaseResponse {
+  data: AdminPopularDestination[] | null;
+}
+
+export interface AdminPopularActivity {
+  id: string;
+  name: string;
+  category: ActivityCategory;
+  cost: number;
+  durationMin: number;
+  imageUrl: string | null;
+  cityName: string;
+  country: string;
+  scheduledCount: number;
+}
+
+export interface AdminPopularActivitiesResponse extends BaseResponse {
+  data: {
+    activities: AdminPopularActivity[];
+    categoryDistribution: Record<string, number>;
+  } | null;
+}
+
+export interface AdminUserListItem extends User {
+  _count: {
+    trips: number;
+    savedDestinations: number;
+    communityPosts: number;
+  };
+}
+
+export interface AdminUsersResponse extends BaseResponse {
+  data: {
+    users: AdminUserListItem[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  } | null;
+}
+
+export interface AdminPlatformTrip {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isPublic: boolean;
+  coverPhoto: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhoto: string | null;
+  };
+  stopsCount: number;
+  cities: string[];
+  totalExpense: number;
+}
+
+export interface AdminAllTripsResponse extends BaseResponse {
+  data: {
+    trips: AdminPlatformTrip[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  } | null;
+}

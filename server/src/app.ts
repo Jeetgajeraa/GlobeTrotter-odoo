@@ -43,7 +43,7 @@ app.use('/api', expenseRoutes);
 app.use('/api', calendarRoutes);
 app.use('/api', sharedRoutes);
 app.use('/api', communityRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api', adminRoutes);
 
 
 

@@ -1,33 +1,29 @@
 import { Router } from 'express';
 import {
-  getAnalytics,
-  getPopularDestinations,
-  getPopularActivities,
-  getAllUsers,
-  updateUserRole,
-  getAllTrips,
+  getAdminAnalytics,
+  getAdminPopularDestinations,
+  getAdminPopularActivities,
+  getAdminUsers,
+  updateAdminUserRole,
+  getAdminAllTrips,
 } from '../controllers/admin.controller.js';
 import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// All admin routes require a valid JWT and ADMIN role
+// Apply Authentication and Admin Privileges on all Admin routes
 router.use(authenticateToken, requireAdmin);
 
-//Overview & Analytics
-router.get('/analytics', getAnalytics);
+// Analytics & Overview
+router.get('/admin/analytics', getAdminAnalytics);
+router.get('/admin/destinations/popular', getAdminPopularDestinations);
+router.get('/admin/activities/popular', getAdminPopularActivities);
 
-//Popular Destinations
-router.get('/destinations/popular', getPopularDestinations);
+// User Management
+router.get('/admin/users', getAdminUsers);
+router.patch('/admin/users/:id/role', updateAdminUserRole);
 
-//Popular Activities
-router.get('/activities/popular', getPopularActivities);
-
-//User Management
-router.get('/users', getAllUsers);
-router.patch('/users/:id/role', updateUserRole);
-
-//Platform Trips
-router.get('/trips', getAllTrips);
+// Platform Trips Oversight
+router.get('/admin/trips', getAdminAllTrips);
 
 export default router;

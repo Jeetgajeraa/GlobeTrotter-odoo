@@ -114,3 +114,23 @@ export async function updateStopActivity(
   }
 }
 
+/**
+ * PATCH /api/admin/users/:id/role
+ * Promotes a user to ADMIN or changes role to USER
+ */
+export async function updateAdminUserRole(
+  userId: string,
+  role: "USER" | "ADMIN",
+) {
+  try {
+    const { data } = await apiClient.patch(`${BASE_URL}/api/admin/users/${userId}/role`, {
+      role,
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+
