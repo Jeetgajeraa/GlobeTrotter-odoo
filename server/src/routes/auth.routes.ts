@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getMe, updateProfile, deleteProfile, logout } from '../controllers/auth.controller.js';
+import { register, login, getMe, updateProfile, deleteProfile, logout, changePassword } from '../controllers/auth.controller.js';
 import { authenticateToken } from '../middlewares/auth.middleware.js';
 import { uploadProfilePhoto } from '../middlewares/upload.middleware.js';
 
@@ -13,6 +13,7 @@ router.use(authenticateToken);
 // Protected routes
 router.get('/me', getMe);
 router.patch('/me', uploadProfilePhoto.single('profilePhoto'), updateProfile);
+router.patch('/me/change-password', changePassword);
 router.delete('/me', deleteProfile);
 
 router.post('/logout', logout);
