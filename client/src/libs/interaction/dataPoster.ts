@@ -29,21 +29,32 @@ export async function login(credentials: {
   }
 }
 
-export async function registerUser(payload: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  city: string;
-  country: string;
-  password: string;
-  confirmPassword: string;
-  additionalInfo?: string;
-}): Promise<RegisterResponse> {
+export async function registerUser(
+  payload:
+    | {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone?: string;
+        phoneNumber?: string;
+        city?: string;
+        country?: string;
+        password: string;
+        confirmPassword?: string;
+        additionalInfo?: string;
+        bio?: string;
+        profilePhoto?: File | string | null;
+      }
+    | FormData,
+): Promise<RegisterResponse> {
   try {
+    const isFormData = payload instanceof FormData;
     const { data } = await apiClient.post<RegisterResponse>(
       `${BASE_URL}/api/auth/register`,
       payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
     );
     return data;
   } catch (error: AxiosError | unknown) {
