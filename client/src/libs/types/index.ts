@@ -159,3 +159,132 @@ export interface GetTripsParams {
   groupByStatus?: boolean;
 }
 
+
+/* ──────────────────────────────────────────────
+   City & Activity Models (mirrors Prisma schema)
+   ────────────────────────────────────────────── */
+export interface City {
+  id: string;
+  name: string;
+  country: string;
+  region?: string | null;
+  costIndex: number;
+  popularity: number;
+  imageUrl?: string | null;
+}
+
+export type ActivityCategory =
+  | "SIGHTSEEING"
+  | "FOOD"
+  | "ADVENTURE"
+  | "CULTURE"
+  | "NIGHTLIFE"
+  | "RELAXATION"
+  | "SHOPPING"
+  | "TRANSPORT"
+  | "OTHER";
+
+export interface Activity {
+  id: string;
+  cityId: string;
+  name: string;
+  description?: string | null;
+  category: ActivityCategory;
+  cost: number;
+  durationMin: number;
+  imageUrl?: string | null;
+}
+
+export interface StopActivity {
+  id: string;
+  stopId: string;
+  activityId: string;
+  scheduledDate: string;
+  startTime?: string | null;
+  order: number;
+  costOverride?: number | null;
+  activity: Activity;
+}
+
+export interface StopExpense {
+  id: string;
+  tripId: string;
+  stopId?: string | null;
+  category: string;
+  amount: number;
+  date: string;
+  description?: string | null;
+}
+
+export interface Stop {
+  id: string;
+  tripId: string;
+  cityId: string;
+  startDate: string;
+  endDate: string;
+  order: number;
+  city: City;
+  stopActivities: StopActivity[];
+  expenses?: StopExpense[];
+}
+
+export interface DetailedTrip extends TripSummary {
+  shareSlug?: string | null;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhoto?: string | null;
+  };
+  stops: Stop[];
+  expenses: StopExpense[];
+  totalExpense?: number;
+  status?: "ongoing" | "upcoming" | "completed";
+}
+
+/* ──────────────────────────────────────────────
+   Itinerary API Responses & Payloads
+   ────────────────────────────────────────────── */
+export interface GetTripResponse extends BaseResponse {
+  data: DetailedTrip | null;
+}
+
+export interface CitiesResponse extends BaseResponse {
+  data: City[] | null;
+}
+
+export interface ActivitiesResponse extends BaseResponse {
+  data: Activity[] | null;
+}
+
+export interface AddStopPayload {
+  cityId: string;
+  startDate: string;
+  endDate: string;
+  order?: number;
+}
+
+export interface StopResponse extends BaseResponse {
+  data: Stop | null;
+}
+
+export interface StopsResponse extends BaseResponse {
+  data: Stop[] | null;
+}
+
+export interface AddStopActivityPayload {
+  activityId?: string;
+  customName?: string;
+  category?: ActivityCategory;
+  cost?: number;
+  durationMin?: number;
+  scheduledDate: string;
+  startTime?: string;
+  order?: number;
+  costOverride?: number;
+}
+
+export interface StopActivityResponse extends BaseResponse {
+  data: StopActivity | null;
+}

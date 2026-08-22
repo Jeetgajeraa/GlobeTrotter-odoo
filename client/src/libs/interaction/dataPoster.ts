@@ -1,7 +1,14 @@
 import { AxiosError } from "axios";
 import { apiClient } from ".";
 import { BASE_URL, LoginResponse, RegisterResponse } from "../constants";
-import { CreateTripPayload, CreateTripResponse } from "../types";
+import {
+  CreateTripPayload,
+  CreateTripResponse,
+  AddStopPayload,
+  StopResponse,
+  AddStopActivityPayload,
+  StopActivityResponse,
+} from "../types";
 
 export async function login(credentials: {
   email: string;
@@ -59,4 +66,45 @@ export async function createTrip(
     const err = error as AxiosError;
     return err.response?.data as CreateTripResponse;
   }
-}
+}
+
+/**
+ * POST /api/trips/:tripId/stops
+ * Adds a new stop/city to a trip.
+ */
+export async function addStop(
+  tripId: string,
+  payload: AddStopPayload,
+): Promise<StopResponse> {
+  try {
+    const { data } = await apiClient.post<StopResponse>(
+      `${BASE_URL}/api/trips/${tripId}/stops`,
+      payload,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as StopResponse;
+  }
+}
+
+/**
+ * POST /api/stops/:stopId/activities
+ * Assigns an activity to a specific day within a stop.
+ */
+export async function addStopActivity(
+  stopId: string,
+  payload: AddStopActivityPayload,
+): Promise<StopActivityResponse> {
+  try {
+    const { data } = await apiClient.post<StopActivityResponse>(
+      `${BASE_URL}/api/stops/${stopId}/activities`,
+      payload,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as StopActivityResponse;
+  }
+}
+

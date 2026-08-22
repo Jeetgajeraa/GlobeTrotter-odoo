@@ -7,7 +7,11 @@ import {
   TripsListResponse,
   GetTripsParams,
 } from "../types";
-
+import {
+  GetTripResponse,
+  CitiesResponse,
+  ActivitiesResponse,
+} from "../types";
 /**
  * GET /api/auth/me
  * Fetches the currently authenticated user's profile.
@@ -55,5 +59,59 @@ export async function getUserTrips(
   } catch (error: AxiosError | unknown) {
     const err = error as AxiosError;
     return err.response?.data as TripsListResponse;
+  }
+}
+
+/**
+ * GET /api/trips/:id
+ * Fetches full trip details including stops, day-wise activities, and expenses.
+ */
+export async function getTripById(tripId: string): Promise<GetTripResponse> {
+  try {
+    const { data } = await apiClient.get<GetTripResponse>(
+      `${BASE_URL}/api/trips/${tripId}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as GetTripResponse;
+  }
+}
+
+/**
+ * GET /api/cities
+ * Search or list cities with costIndex and popularity.
+ */
+export async function getCities(search?: string): Promise<CitiesResponse> {
+  try {
+    const { data } = await apiClient.get<CitiesResponse>(
+      `${BASE_URL}/api/cities`,
+      { params: search ? { search } : undefined },
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as CitiesResponse;
+  }
+}
+
+/**
+ * GET /api/activities
+ * Filter activities by city or category.
+ */
+export async function getActivities(params?: {
+  cityId?: string;
+  category?: string;
+  search?: string;
+}): Promise<ActivitiesResponse> {
+  try {
+    const { data } = await apiClient.get<ActivitiesResponse>(
+      `${BASE_URL}/api/activities`,
+      { params },
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as ActivitiesResponse;
   }
 }
