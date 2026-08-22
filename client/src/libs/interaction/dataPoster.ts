@@ -8,6 +8,8 @@ import {
   StopResponse,
   AddStopActivityPayload,
   StopActivityResponse,
+  SingleCommunityPostResponse,
+  LikePostResponse,
 } from "../types";
 
 export async function login(credentials: {
@@ -105,6 +107,62 @@ export async function addStopActivity(
   } catch (error: AxiosError | unknown) {
     const err = error as AxiosError;
     return err.response?.data as StopActivityResponse;
+  }
+}
+
+/**
+ * POST /api/community/posts
+ * Creates a new community post (supports FormData with file upload)
+ */
+export async function createCommunityPost(
+  payload: FormData,
+): Promise<SingleCommunityPostResponse> {
+  try {
+    const { data } = await apiClient.post<SingleCommunityPostResponse>(
+      `${BASE_URL}/api/community/posts`,
+      payload,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as SingleCommunityPostResponse;
+  }
+}
+
+/**
+ * POST /api/community/posts/:id/like
+ * Increment likes on a community post
+ */
+export async function likeCommunityPost(
+  id: string,
+): Promise<LikePostResponse> {
+  try {
+    const { data } = await apiClient.post<LikePostResponse>(
+      `${BASE_URL}/api/community/posts/${id}/like`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as LikePostResponse;
+  }
+}
+
+/**
+ * POST /api/community/posts/:id/unlike
+ * Decrement likes on a community post
+ */
+export async function unlikeCommunityPost(
+  id: string,
+): Promise<LikePostResponse> {
+  try {
+    const { data } = await apiClient.post<LikePostResponse>(
+      `${BASE_URL}/api/community/posts/${id}/unlike`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as LikePostResponse;
   }
 }
 

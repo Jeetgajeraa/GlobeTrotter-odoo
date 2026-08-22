@@ -408,4 +408,81 @@ export interface AdminAllTripsResponse extends BaseResponse {
       totalPages: number;
     };
   } | null;
-}
+}
+
+/* ──────────────────────────────────────────────
+   Community Post Types
+   ────────────────────────────────────────────── */
+export interface CommunityAuthor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profilePhoto?: string | null;
+  city?: string | null;
+  country?: string | null;
+}
+
+export interface CommunityTripSummary {
+  id: string;
+  name: string;
+  coverPhoto?: string | null;
+  shareSlug?: string | null;
+  isPublic?: boolean;
+}
+
+export interface CommunityPost {
+  id: string;
+  userId: string;
+  tripId?: string | null;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  user: CommunityAuthor;
+  trip?: CommunityTripSummary | null;
+}
+
+export interface CommunityPostsPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface CommunityPostsResponse extends BaseResponse {
+  data: {
+    posts: CommunityPost[];
+    pagination: CommunityPostsPagination;
+  } | null;
+}
+
+export interface SingleCommunityPostResponse extends BaseResponse {
+  data: CommunityPost | null;
+}
+
+export interface LikePostResponse extends BaseResponse {
+  data: {
+    id: string;
+    likeCount: number;
+  } | null;
+}
+
+export interface GetCommunityPostsParams {
+  search?: string;
+  tripId?: string;
+  userId?: string;
+  hasImage?: boolean;
+  hasTrip?: boolean;
+  sortBy?: "createdAt" | "updatedAt" | "likeCount" | "title";
+  sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
+export type GroupByOption = "none" | "user" | "date";
+export type SortByOption = "createdAt" | "likeCount" | "updatedAt" | "title";
+export type PostTypeFilter = "all" | "images" | "trips";
+export type AuthorFilter = "all" | "me";
+export type DateRangeFilter = "all" | "today" | "week" | "month";
