@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { AppNav } from "@/src/components/AppNav";
 
 /* ── Data ─────────────────────────────────────────────────── */
 const topRegions = [
@@ -72,89 +73,7 @@ export default function LandingPage() {
   return (
     <div style={{ background: "var(--color-paper)", minHeight: "100vh" }}>
 
-      {/* ── Nav ──────────────────────────────────────────────── */}
-      <header style={{
-        background: "var(--color-paper)",
-        borderBottom: "1px solid var(--color-line)",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-      }}>
-        <div style={{
-          maxWidth: 1120,
-          margin: "0 auto",
-          padding: "0 48px",
-          height: 60,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Route-dot motif logo */}
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <circle cx="7"  cy="14" r="5" fill="var(--color-mulberry)" />
-              <line x1="12" y1="14" x2="16" y2="14" stroke="var(--color-route)" strokeWidth="2" strokeDasharray="2 2"/>
-              <circle cx="21" cy="14" r="5" stroke="var(--color-ink-faint)" strokeWidth="2" fill="none"/>
-            </svg>
-            <span style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 20,
-              color: "var(--color-ink)",
-              letterSpacing: "-0.3px",
-            }}>
-              Globe<span style={{ color: "var(--color-mulberry)" }}>Trotter</span>
-            </span>
-          </div>
-
-          {/* Nav tabs */}
-          <nav style={{ display: "flex", gap: 32, alignItems: "center" }}>
-            {["Dashboard", "My Trips", "Explore"].map(tab => (
-              <a
-                key={tab}
-                href="#"
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontWeight: tab === "Dashboard" ? 600 : 500,
-                  fontSize: 15,
-                  color: tab === "Dashboard" ? "var(--color-mulberry)" : "var(--color-ink-soft)",
-                  textDecoration: "none",
-                  paddingBottom: 4,
-                  borderBottom: tab === "Dashboard" ? "2px solid var(--color-mulberry)" : "2px solid transparent",
-                  transition: "color 150ms, border-color 150ms",
-                }}
-              >
-                {tab}
-              </a>
-            ))}
-          </nav>
-
-          {/* Avatar */}
-          <button
-            id="avatar-btn"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              background: "var(--color-mulberry-tint)",
-              border: "2px solid var(--color-mulberry)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-            aria-label="User profile"
-          >
-            <span style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-              fontSize: 15,
-              color: "var(--color-mulberry)",
-            }}>A</span>
-          </button>
-        </div>
-      </header>
+      <AppNav />
 
       {/* ── Main content ─────────────────────────────────────── */}
       <main style={{

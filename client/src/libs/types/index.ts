@@ -85,3 +85,77 @@ export interface CreateTripResponse extends BaseResponse {
     };
 }
 
+/* ──────────────────────────────────────────────
+   Full Trip — returned by GET /api/trips
+   (mirrors trip.controller getTripStatus + includes)
+   ────────────────────────────────────────────── */
+export type TripStatus = "ongoing" | "upcoming" | "completed";
+
+export interface TripStop {
+  id: string;
+  tripId: string;
+  cityId: string;
+  startDate: string;
+  endDate: string;
+  order: number;
+  city: {
+    id: string;
+    name: string;
+    country: string;
+    imageUrl: string | null;
+  };
+  _count: { stopActivities: number };
+}
+
+export interface Trip {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  coverPhoto: string | null;
+  startDate: string;
+  endDate: string;
+  isPublic: boolean;
+  shareSlug: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: TripStatus;
+  totalExpense: number;
+  stops: TripStop[];
+  _count: {
+    stops: number;
+    expenses: number;
+    communityPosts: number;
+  };
+}
+
+/* ──────────────────────────────────────────────
+   GET /api/trips  (flat list)
+   ────────────────────────────────────────────── */
+export interface TripsListResponse extends BaseResponse {
+  data: Trip[] | null;
+}
+
+/* ──────────────────────────────────────────────
+   GET /api/trips?groupByStatus=true  (Screen 6)
+   ────────────────────────────────────────────── */
+export interface GroupedTripsResponse extends BaseResponse {
+  data: {
+    ongoing:   Trip[];
+    upcoming:  Trip[];
+    completed: Trip[];
+    total:     number;
+  } | null;
+}
+
+/* ──────────────────────────────────────────────
+   GET /api/trips  query params
+   ────────────────────────────────────────────── */
+export interface GetTripsParams {
+  search?:        string;
+  status?:        TripStatus | "all";
+  sortBy?:        "startDate" | "endDate" | "name" | "createdAt";
+  sortOrder?:     "asc" | "desc";
+  groupByStatus?: boolean;
+}
+
