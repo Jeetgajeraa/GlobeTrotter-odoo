@@ -1,6 +1,7 @@
 import { AxiosError } from "axios";
 import { apiClient } from ".";
 import { BASE_URL, LoginResponse, RegisterResponse } from "../constants";
+import { CreateTripPayload, CreateTripResponse } from "../types";
 
 export async function login(credentials: {
   email: string;
@@ -40,3 +41,22 @@ export async function registerUser(payload: {
     return err.response?.data as RegisterResponse;
   }
 }
+
+export async function createTrip(
+  payload: CreateTripPayload | FormData,
+): Promise<CreateTripResponse> {
+  try {
+    const isFormData = payload instanceof FormData;
+    const { data } = await apiClient.post<CreateTripResponse>(
+      `${BASE_URL}/api/trips`,
+      payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as CreateTripResponse;
+  }
+}
