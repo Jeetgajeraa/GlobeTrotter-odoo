@@ -1,19 +1,42 @@
 import { AxiosError } from "axios";
-import { apiPost } from ".";
-import { BASE_URL, LoginResponse } from "../constants";
+import { apiClient } from ".";
+import { BASE_URL, LoginResponse, RegisterResponse } from "../constants";
 
-export async function loginTPO(credentials: {
-  username: string;
+export async function login(credentials: {
+  email: string;
   password: string;
 }): Promise<LoginResponse> {
   try {
-    const { data } = await apiPost<LoginResponse>(
-      `${BASE_URL}/centraltpo/login`,
+    const { data } = await apiClient.post<LoginResponse>(
+      `${BASE_URL}/api/auth/login`,
       credentials,
     );
     return data;
   } catch (error: AxiosError | unknown) {
     const err = error as AxiosError;
     return err.response?.data as LoginResponse;
+  }
+}
+
+export async function registerUser(payload: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  password: string;
+  confirmPassword: string;
+  additionalInfo?: string;
+}): Promise<RegisterResponse> {
+  try {
+    const { data } = await apiClient.post<RegisterResponse>(
+      `${BASE_URL}/api/auth/register`,
+      payload,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as RegisterResponse;
   }
 }

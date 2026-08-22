@@ -7,6 +7,12 @@ export interface BaseResponse {
 }
 
 export interface LoginResponse extends BaseResponse {
+  data: {
+    token: string;
+  };
+}
+
+export interface RegisterResponse extends BaseResponse {
   data?: {
     token: string;
   };

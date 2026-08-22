@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import type { UseFormRegisterReturn } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import cookies from "js-cookie";
+
+import { login, registerUser } from "@/src/libs/interaction/dataPoster";
+import { useToast } from "@/src/hooks/useToast";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -18,17 +26,42 @@ const inputCls =
   "hover:border-[#D6CCBC] " +
   "focus:border-[#714B67] focus:shadow-[0_0_0_3px_#F1E7EE] focus:bg-white";
 
+const inputErrorCls =
+  "w-full bg-[#F1EDE6] border border-red-300 rounded-lg px-3 py-2 " +
+  "text-[13px] text-[#241B2F] outline-none " +
+  "placeholder:text-[#9A93A6] " +
+  "transition-[border-color,box-shadow,background] duration-150 " +
+  "focus:border-red-400 focus:shadow-[0_0_0_3px_#fee2e2] focus:bg-white";
+
 const btnCls =
   "w-full mt-1.5 bg-[#714B67] hover:bg-[#4E3347] active:scale-[0.98] " +
   "text-white font-semibold text-[14px] rounded-lg py-2.5 cursor-pointer outline-none " +
   "transition-all duration-150 " +
   "hover:shadow-[0_4px_12px_rgba(113,75,103,0.28)] " +
-  "focus-visible:shadow-[0_0_0_3px_#F1E7EE]";
+  "focus-visible:shadow-[0_0_0_3px_#F1E7EE] " +
+  "disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100";
+
+/* ── Types ── */
+type LoginSchema = { email: string; password: string };
+
+type RegisterSchema = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  password: string;
+  confirmPassword: string;
+  additionalInfo?: string;
+};
 
 /* ─────────────────────────────────────────── */
 
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
+  const router = useRouter();
+  const { toast } = useToast();
 
   return (
     <div className={`h-screen flex overflow-hidden bg-[#FAF8F5] ${inter.className}`}>
@@ -138,131 +171,29 @@ export default function AuthPage() {
             ))}
           </div>
 
-          {/* ── Login ── */}
+          {/* ── Login panel ── */}
           {mode === "login" && (
-            <div id="panel-login" role="tabpanel" aria-labelledby="tab-login"
-              className="animate-[panelIn_0.22s_ease-out]">
-              <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk.className}`}>
-                Welcome back
-              </h2>
-              <p className="text-[12px] text-[#5C5468] mb-4 leading-relaxed">
-                Sign in to continue planning your trips.
-              </p>
-
-              <div className="flex flex-col gap-2.5">
-                <Field label="Username" htmlFor="login-username">
-                  <input
-                    id="login-username" type="text"
-                    placeholder="your_username" autoComplete="username"
-                    className={inputCls}
-                  />
-                </Field>
-
-                <Field label="Password" htmlFor="login-password">
-                  <PasswordField id="login-password" placeholder="••••••••" />
-                  <div className="flex justify-end mt-0.5">
-                    <button type="button"
-                      className="text-[12px] text-[#714B67] font-medium underline underline-offset-2
-                        hover:text-[#4E3347] transition-colors outline-none cursor-pointer">
-                      Forgot password?
-                    </button>
-                  </div>
-                </Field>
-              </div>
-
-              <button id="btn-login" type="submit" className={btnCls}>
-                Sign in to GlobeTrotter
-              </button>
-
-              <Divider />
-
-              <p className="text-center text-[12px] text-[#5C5468] mt-2">
-                New here?{" "}
-                <button type="button" onClick={() => setMode("register")}
-                  className="text-[#714B67] font-semibold underline underline-offset-2
-                    hover:text-[#4E3347] transition-colors outline-none cursor-pointer">
-                  Create an account
-                </button>
-              </p>
-            </div>
+            <LoginPanel
+              toast={toast}
+              router={router}
+              spaceGrotesk={spaceGrotesk.className}
+              onSwitchMode={() => setMode("register")}
+            />
           )}
 
-          {/* ── Register ── */}
+          {/* ── Register panel ── */}
           {mode === "register" && (
-            <div id="panel-register" role="tabpanel" aria-labelledby="tab-register"
-              className="animate-[panelIn_0.22s_ease-out]">
-              <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk.className}`}>
-                Join GlobeTrotter
-              </h2>
-              <p className="text-[12px] text-[#5C5468] mb-3 leading-relaxed">
-                Create your account and start building your first route.
-              </p>
-
-              <div className="flex flex-col gap-2">
-                {/* First + Last */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="First name" htmlFor="reg-firstname">
-                    <input id="reg-firstname" type="text" placeholder="Priya"
-                      autoComplete="given-name" className={inputCls} />
-                  </Field>
-                  <Field label="Last name" htmlFor="reg-lastname">
-                    <input id="reg-lastname" type="text" placeholder="Sharma"
-                      autoComplete="family-name" className={inputCls} />
-                  </Field>
-                </div>
-
-                {/* Email + Phone */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Email address" htmlFor="reg-email">
-                    <input id="reg-email" type="email" placeholder="priya@example.com"
-                      autoComplete="email" className={inputCls} />
-                  </Field>
-                  <Field label="Phone number" htmlFor="reg-phone">
-                    <input id="reg-phone" type="tel" placeholder="+91 98765 43210"
-                      autoComplete="tel" className={inputCls} />
-                  </Field>
-                </div>
-
-                {/* City + Country */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="City" htmlFor="reg-city">
-                    <input id="reg-city" type="text" placeholder="Mumbai"
-                      autoComplete="address-level2" className={inputCls} />
-                  </Field>
-                  <Field label="Country" htmlFor="reg-country">
-                    <input id="reg-country" type="text" placeholder="India"
-                      autoComplete="country-name" className={inputCls} />
-                  </Field>
-                </div>
-
-                {/* Additional info */}
-                <Field label="Additional information" htmlFor="reg-bio">
-                  <textarea
-                    id="reg-bio"
-                    placeholder="Tell us about your travel style, favourite destinations…"
-                    className={`${inputCls} resize-none min-h-[52px]`}
-                  />
-                </Field>
-              </div>
-
-              <button id="btn-register" type="submit" className={btnCls}>
-                Register — let&apos;s go
-              </button>
-
-              <p className="text-center text-[12px] text-[#5C5468] mt-2">
-                Already have an account?{" "}
-                <button type="button" onClick={() => setMode("login")}
-                  className="text-[#714B67] font-semibold underline underline-offset-2
-                    hover:text-[#4E3347] transition-colors outline-none cursor-pointer">
-                  Sign in
-                </button>
-              </p>
-            </div>
+            <RegisterPanel
+              toast={toast}
+              router={router}
+              spaceGrotesk={spaceGrotesk.className}
+              onSwitchMode={() => setMode("login")}
+            />
           )}
         </div>
       </main>
 
-      {/* Keyframe definitions — only place inline CSS is used */}
+      {/* Keyframe definitions */}
       <style>{`
         @keyframes cardIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes panelIn { from { opacity:0; transform:translateX(6px);  } to { opacity:1; transform:translateX(0); } }
@@ -271,15 +202,373 @@ export default function AuthPage() {
   );
 }
 
+/* ── Login Panel ── */
+
+function LoginPanel({
+  toast,
+  router,
+  spaceGrotesk,
+  onSwitchMode,
+}: {
+  toast: ReturnType<typeof useToast>["toast"];
+  router: ReturnType<typeof useRouter>;
+  spaceGrotesk: string;
+  onSwitchMode: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginSchema>({
+    defaultValues: { email: "", password: "" },
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: login,
+  });
+
+  function onSubmit(data: LoginSchema) {
+    mutate(data, {
+      onSuccess(res) {
+        if (res?.success) {
+          cookies.set("token", res.data?.token ?? "", { expires: 7 });
+          toast({ title: "Welcome back!", description: "Signed in successfully." });
+          router.push("/");
+        } else {
+          toast({
+            title: "Sign-in failed",
+            description: res?.message ?? "Invalid credentials.",
+            variant: "destructive",
+          });
+        }
+      },
+      onError(error) {
+        toast({
+          title: "Network error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  }
+
+  return (
+    <div
+      id="panel-login"
+      role="tabpanel"
+      aria-labelledby="tab-login"
+      className="animate-[panelIn_0.22s_ease-out]"
+    >
+      <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk}`}>
+        Welcome back
+      </h2>
+      <p className="text-[12px] text-[#5C5468] mb-4 leading-relaxed">
+        Sign in to continue planning your trips.
+      </p>
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="flex flex-col gap-2.5">
+          <Field label="Username" htmlFor="login-username" error={errors.email?.message}>
+            <input
+              id="login-username"
+              type="text"
+              placeholder="your_username"
+              autoComplete="username"
+              className={errors.email ? inputErrorCls : inputCls}
+              {...register("email", { required: "Username is required" })}
+            />
+          </Field>
+
+          <Field label="Password" htmlFor="login-password" error={errors.password?.message}>
+            <PasswordField
+              id="login-password"
+              placeholder="••••••••"
+              registration={register("password", {
+                required: "Password is required",
+                minLength: { value: 6, message: "Password must be at least 6 characters" },
+              })}
+              hasError={!!errors.password}
+            />
+            <div className="flex justify-end mt-0.5">
+              <button
+                type="button"
+                className="text-[12px] text-[#714B67] font-medium underline underline-offset-2
+                  hover:text-[#4E3347] transition-colors outline-none cursor-pointer"
+              >
+                Forgot password?
+              </button>
+            </div>
+          </Field>
+        </div>
+
+        <button
+          id="btn-login"
+          type="submit"
+          disabled={isPending}
+          className={btnCls}
+        >
+          {isPending ? "Signing in…" : "Sign in to GlobeTrotter"}
+        </button>
+      </form>
+
+      <Divider />
+
+      <p className="text-center text-[12px] text-[#5C5468] mt-2">
+        New here?{" "}
+        <button
+          type="button"
+          onClick={onSwitchMode}
+          className="text-[#714B67] font-semibold underline underline-offset-2
+            hover:text-[#4E3347] transition-colors outline-none cursor-pointer"
+        >
+          Create an account
+        </button>
+      </p>
+    </div>
+  );
+}
+
+/* ── Register Panel ── */
+
+function RegisterPanel({
+  toast,
+  router,
+  spaceGrotesk,
+  onSwitchMode,
+}: {
+  toast: ReturnType<typeof useToast>["toast"];
+  router: ReturnType<typeof useRouter>;
+  spaceGrotesk: string;
+  onSwitchMode: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterSchema>({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      city: "",
+      country: "",
+      password: "",
+      confirmPassword: "",
+      additionalInfo: "",
+    },
+  });
+
+  const passwordValue = watch("password");
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: registerUser,
+  });
+
+  function onSubmit(data: RegisterSchema) {
+    mutate(data, {
+      onSuccess(res) {
+        if (res?.success) {
+          if (res.data?.token) {
+            cookies.set("token", res.data.token, { expires: 7 });
+          }
+          toast({ title: "Account created!", description: "Welcome to GlobeTrotter 🌐" });
+          router.push("/");
+        } else {
+          toast({
+            title: "Registration failed",
+            description: res?.message ?? "Something went wrong.",
+            variant: "destructive",
+          });
+        }
+      },
+      onError(error) {
+        toast({
+          title: "Network error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  }
+
+  return (
+    <div
+      id="panel-register"
+      role="tabpanel"
+      aria-labelledby="tab-register"
+      className="animate-[panelIn_0.22s_ease-out]"
+    >
+      <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk}`}>
+        Join GlobeTrotter
+      </h2>
+      <p className="text-[12px] text-[#5C5468] mb-3 leading-relaxed">
+        Create your account and start building your first route.
+      </p>
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="flex flex-col gap-2">
+          {/* First + Last */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="First name" htmlFor="reg-firstname" error={errors.firstName?.message}>
+              <input
+                id="reg-firstname"
+                type="text"
+                placeholder="Priya"
+                autoComplete="given-name"
+                className={errors.firstName ? inputErrorCls : inputCls}
+                {...register("firstName", { required: "Required" })}
+              />
+            </Field>
+            <Field label="Last name" htmlFor="reg-lastname" error={errors.lastName?.message}>
+              <input
+                id="reg-lastname"
+                type="text"
+                placeholder="Sharma"
+                autoComplete="family-name"
+                className={errors.lastName ? inputErrorCls : inputCls}
+                {...register("lastName", { required: "Required" })}
+              />
+            </Field>
+          </div>
+
+          {/* Email + Phone */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Email address" htmlFor="reg-email" error={errors.email?.message}>
+              <input
+                id="reg-email"
+                type="email"
+                placeholder="priya@example.com"
+                autoComplete="email"
+                className={errors.email ? inputErrorCls : inputCls}
+                {...register("email", {
+                  required: "Required",
+                  pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email" },
+                })}
+              />
+            </Field>
+            <Field label="Phone number" htmlFor="reg-phone" error={errors.phone?.message}>
+              <input
+                id="reg-phone"
+                type="tel"
+                placeholder="+91 98765 43210"
+                autoComplete="tel"
+                className={errors.phone ? inputErrorCls : inputCls}
+                {...register("phone", { required: "Required" })}
+              />
+            </Field>
+          </div>
+
+          {/* City + Country */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="City" htmlFor="reg-city" error={errors.city?.message}>
+              <input
+                id="reg-city"
+                type="text"
+                placeholder="Mumbai"
+                autoComplete="address-level2"
+                className={errors.city ? inputErrorCls : inputCls}
+                {...register("city", { required: "Required" })}
+              />
+            </Field>
+            <Field label="Country" htmlFor="reg-country" error={errors.country?.message}>
+              <input
+                id="reg-country"
+                type="text"
+                placeholder="India"
+                autoComplete="country-name"
+                className={errors.country ? inputErrorCls : inputCls}
+                {...register("country", { required: "Required" })}
+              />
+            </Field>
+          </div>
+
+          {/* Password + Confirm */}
+          <Field label="Password" htmlFor="reg-password" error={errors.password?.message}>
+            <PasswordField
+              id="reg-password"
+              placeholder="Min. 8 characters"
+              autoComplete="new-password"
+              registration={register("password", {
+                required: "Password is required",
+                minLength: { value: 8, message: "Must be at least 8 characters" },
+              })}
+              hasError={!!errors.password}
+            />
+          </Field>
+
+          <Field label="Confirm password" htmlFor="reg-confirm-password" error={errors.confirmPassword?.message}>
+            <PasswordField
+              id="reg-confirm-password"
+              placeholder="Re-enter password"
+              autoComplete="new-password"
+              registration={register("confirmPassword", {
+                required: "Please confirm your password",
+                validate: (val) => val === passwordValue || "Passwords do not match",
+              })}
+              hasError={!!errors.confirmPassword}
+            />
+          </Field>
+
+          {/* Additional info */}
+          <Field label="Additional information" htmlFor="reg-bio">
+            <textarea
+              id="reg-bio"
+              placeholder="Tell us about your travel style, favourite destinations…"
+              className={`${inputCls} resize-none min-h-[52px]`}
+              {...register("additionalInfo")}
+            />
+          </Field>
+        </div>
+
+        <button
+          id="btn-register"
+          type="submit"
+          disabled={isPending}
+          className={btnCls}
+        >
+          {isPending ? "Creating account…" : "Register — let's go"}
+        </button>
+      </form>
+
+      <p className="text-center text-[12px] text-[#5C5468] mt-2">
+        Already have an account?{" "}
+        <button
+          type="button"
+          onClick={onSwitchMode}
+          className="text-[#714B67] font-semibold underline underline-offset-2
+            hover:text-[#4E3347] transition-colors outline-none cursor-pointer"
+        >
+          Sign in
+        </button>
+      </p>
+    </div>
+  );
+}
+
 /* ── Sub-components ── */
 
-function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
+function Field({
+  label,
+  htmlFor,
+  error,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={htmlFor} className="text-[11px] font-semibold text-[#5C5468] uppercase tracking-[0.4px]">
         {label}
       </label>
       {children}
+      {error && (
+        <span className="text-[11px] text-red-500 leading-tight">{error}</span>
+      )}
     </div>
   );
 }
@@ -307,7 +596,19 @@ function RouteDash() {
   );
 }
 
-function PasswordField({ id, placeholder }: { id: string; placeholder: string }) {
+function PasswordField({
+  id,
+  placeholder,
+  autoComplete = "current-password",
+  registration,
+  hasError,
+}: {
+  id: string;
+  placeholder: string;
+  autoComplete?: string;
+  registration: UseFormRegisterReturn;
+  hasError?: boolean;
+}) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -315,8 +616,9 @@ function PasswordField({ id, placeholder }: { id: string; placeholder: string })
         id={id}
         type={show ? "text" : "password"}
         placeholder={placeholder}
-        autoComplete="current-password"
-        className={`${inputCls} pr-10`}
+        autoComplete={autoComplete}
+        className={`${hasError ? inputErrorCls : inputCls} pr-10`}
+        {...registration}
       />
       <button
         type="button"
