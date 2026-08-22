@@ -24,6 +24,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 };
 
+// For routes that are public but can leverage user context when a token is present
 export const optionalAuthenticateToken = (req: Request, _res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
@@ -40,6 +41,7 @@ export const optionalAuthenticateToken = (req: Request, _res: Response, next: Ne
   next();
 };
 
+// Must be chained after authenticateToken — returns 403 for non-admin users
 export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
     res.status(401).json(createResponse(false, 'Unauthorized access', null));
@@ -53,5 +55,3 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction): v
 
   next();
 };
-
-
