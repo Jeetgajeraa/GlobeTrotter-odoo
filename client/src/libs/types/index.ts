@@ -363,7 +363,9 @@ export interface AdminPopularDestinationsResponse extends BaseResponse {
 
 export interface AdminPopularActivity {
   id: string;
+  cityId?: string;
   name: string;
+  description?: string | null;
   category: ActivityCategory;
   cost: number;
   durationMin: number;

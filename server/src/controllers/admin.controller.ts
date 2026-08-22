@@ -214,7 +214,9 @@ export const getAdminPopularActivities = async (req: Request, res: Response): Pr
     const rankedActivities = activities
       .map((a) => ({
         id: a.id,
+        cityId: a.cityId,
         name: a.name,
+        description: a.description,
         category: a.category,
         cost: a.cost,
         durationMin: a.durationMin,

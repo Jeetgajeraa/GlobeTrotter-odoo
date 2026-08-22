@@ -133,4 +133,53 @@ export async function updateAdminUserRole(
   }
 }
 
+/**
+ * PATCH /api/cities/:id
+ * Updates an official city (Admin only)
+ */
+export async function updateCity(
+  cityId: string,
+  payload: FormData | Record<string, any>,
+) {
+  try {
+    const isFormData = payload instanceof FormData;
+    const { data } = await apiClient.patch(
+      `${BASE_URL}/api/cities/${cityId}`,
+      payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+/**
+ * PATCH /api/activities/:id
+ * Updates an official activity (Admin only)
+ */
+export async function updateActivity(
+  activityId: string,
+  payload: FormData | Record<string, any>,
+) {
+  try {
+    const isFormData = payload instanceof FormData;
+    const { data } = await apiClient.patch(
+      `${BASE_URL}/api/activities/${activityId}`,
+      payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+
 

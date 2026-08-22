@@ -68,3 +68,52 @@ export async function deleteCommunityPost(
     return err.response?.data as BaseResponse;
   }
 }
+
+/**
+ * DELETE /api/cities/:id
+ * Removes an official city catalog item (Admin only)
+ */
+export async function deleteCity(cityId: string): Promise<BaseResponse> {
+  try {
+    const { data } = await apiClient.delete<BaseResponse>(
+      `${BASE_URL}/api/cities/${cityId}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as BaseResponse;
+  }
+}
+
+/**
+ * DELETE /api/activities/:id
+ * Removes an official activity catalog item (Admin only)
+ */
+export async function deleteActivity(activityId: string): Promise<BaseResponse> {
+  try {
+    const { data } = await apiClient.delete<BaseResponse>(
+      `${BASE_URL}/api/activities/${activityId}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as BaseResponse;
+  }
+}
+
+/**
+ * DELETE /api/trips/:id
+ * Deletes a trip (Owner or Admin Moderator)
+ */
+export async function deleteTrip(tripId: string): Promise<BaseResponse> {
+  try {
+    const { data } = await apiClient.delete<BaseResponse>(
+      `${BASE_URL}/api/trips/${tripId}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as BaseResponse;
+  }
+}
+

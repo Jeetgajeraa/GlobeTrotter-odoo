@@ -197,3 +197,50 @@ export async function unlikeCommunityPost(
   }
 }
 
+/**
+ * POST /api/cities
+ * Creates a new official city (Admin only)
+ */
+export async function createCity(
+  payload: FormData | Record<string, any>,
+) {
+  try {
+    const isFormData = payload instanceof FormData;
+    const { data } = await apiClient.post(
+      `${BASE_URL}/api/cities`,
+      payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+/**
+ * POST /api/activities
+ * Creates a new official activity (Admin only)
+ */
+export async function createActivity(
+  payload: FormData | Record<string, any>,
+) {
+  try {
+    const isFormData = payload instanceof FormData;
+    const { data } = await apiClient.post(
+      `${BASE_URL}/api/activities`,
+      payload,
+      isFormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : undefined,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+

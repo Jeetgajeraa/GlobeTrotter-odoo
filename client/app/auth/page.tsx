@@ -207,8 +207,14 @@ function LoginPanel({
       onSuccess(res) {
         if (res?.success) {
           cookies.set("token", res.data?.token ?? "", { expires: 7 });
-          toast({ title: "Welcome back!", description: "Signed in successfully." });
-          router.push("/");
+          const userRole = (res.data as any)?.user?.role;
+          if (userRole === "ADMIN") {
+            toast({ title: "Welcome Admin!", description: "Redirecting to Admin Panel..." });
+            router.push("/admin");
+          } else {
+            toast({ title: "Welcome back!", description: "Signed in successfully." });
+            router.push("/");
+          }
         } else {
           toast({
             title: "Sign-in failed",

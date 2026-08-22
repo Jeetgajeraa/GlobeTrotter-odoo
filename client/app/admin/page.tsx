@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import cookies from "js-cookie";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +29,12 @@ import {
   Filter,
   PieChart as PieChartIcon,
   Activity as ActivityIcon,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Upload,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -37,7 +45,17 @@ import {
   getAdminAllTrips,
   getMe,
 } from "@/src/libs/interaction/dataGetter";
-import { updateAdminUserRole } from "@/src/libs/interaction/dataPatcher";
+import { createCity, createActivity } from "@/src/libs/interaction/dataPoster";
+import {
+  updateAdminUserRole,
+  updateCity,
+  updateActivity,
+} from "@/src/libs/interaction/dataPatcher";
+import {
+  deleteCity,
+  deleteActivity,
+  deleteTrip,
+} from "@/src/libs/interaction/dataDeleter";
 import { useToast } from "@/src/hooks/useToast";
 import type {
   AdminAnalyticsData,
@@ -184,6 +202,235 @@ export default function AdminDashboardPage() {
     roleMutation.mutate({ userId: user.id, role: newRole });
   };
 
+  // Modal states for City
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const [editingCity, setEditingCity] = useState<AdminPopularDestination | null>(null);
+  const [cityFormData, setCityFormData] = useState({
+    name: "",
+    country: "",
+    region: "",
+    costIndex: 50,
+    popularity: 0,
+    imageUrl: "",
+  });
+  const [cityImageFile, setCityImageFile] = useState<File | null>(null);
+
+  // Modal states for Activity
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<AdminPopularActivity | null>(null);
+  const [activityFormData, setActivityFormData] = useState({
+    cityId: "",
+    name: "",
+    description: "",
+    category: "SIGHTSEEING",
+    cost: 0,
+    durationMin: 60,
+    imageUrl: "",
+  });
+  const [activityImageFile, setActivityImageFile] = useState<File | null>(null);
+
+  // Delete Confirmation modal state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: "city" | "activity" | "trip";
+    id: string;
+    name: string;
+  } | null>(null);
+
+  // City Mutations
+  const citySaveMutation = useMutation({
+    mutationFn: async () => {
+      const fd = new FormData();
+      fd.append("name", cityFormData.name);
+      fd.append("country", cityFormData.country);
+      if (cityFormData.region) fd.append("region", cityFormData.region);
+      fd.append("costIndex", String(cityFormData.costIndex));
+      fd.append("popularity", String(cityFormData.popularity));
+      if (cityImageFile) {
+        fd.append("imageUrl", cityImageFile);
+      } else if (cityFormData.imageUrl) {
+        fd.append("imageUrl", cityFormData.imageUrl);
+      }
+
+      if (editingCity) {
+        return updateCity(editingCity.id, fd);
+      } else {
+        return createCity(fd);
+      }
+    },
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast({
+          title: editingCity ? "City Updated" : "City Created",
+          description: res.message || "Destination saved successfully.",
+        });
+        setIsCityModalOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["adminPopularDestinations"] });
+        queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      } else {
+        toast({
+          title: "Save Failed",
+          description: res?.message || "Could not save city.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const cityDeleteMutation = useMutation({
+    mutationFn: (cityId: string) => deleteCity(cityId),
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast({ title: "City Deleted", description: "City removed from catalog." });
+        setDeleteConfirm(null);
+        queryClient.invalidateQueries({ queryKey: ["adminPopularDestinations"] });
+        queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      } else {
+        toast({ title: "Delete Failed", description: res?.message || "Could not delete city.", variant: "destructive" });
+      }
+    },
+  });
+
+  // Activity Mutations
+  const activitySaveMutation = useMutation({
+    mutationFn: async () => {
+      const fd = new FormData();
+      if (!editingActivity) {
+        fd.append("cityId", activityFormData.cityId);
+      }
+      fd.append("name", activityFormData.name);
+      if (activityFormData.description) fd.append("description", activityFormData.description);
+      fd.append("category", activityFormData.category);
+      fd.append("cost", String(activityFormData.cost));
+      fd.append("durationMin", String(activityFormData.durationMin));
+      if (activityImageFile) {
+        fd.append("imageUrl", activityImageFile);
+      } else if (activityFormData.imageUrl) {
+        fd.append("imageUrl", activityFormData.imageUrl);
+      }
+
+      if (editingActivity) {
+        return updateActivity(editingActivity.id, fd);
+      } else {
+        return createActivity(fd);
+      }
+    },
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast({
+          title: editingActivity ? "Activity Updated" : "Activity Created",
+          description: res.message || "Activity saved successfully.",
+        });
+        setIsActivityModalOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["adminPopularActivities"] });
+        queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      } else {
+        toast({
+          title: "Save Failed",
+          description: res?.message || "Could not save activity.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const activityDeleteMutation = useMutation({
+    mutationFn: (activityId: string) => deleteActivity(activityId),
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast({ title: "Activity Deleted", description: "Activity removed from catalog." });
+        setDeleteConfirm(null);
+        queryClient.invalidateQueries({ queryKey: ["adminPopularActivities"] });
+        queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      } else {
+        toast({ title: "Delete Failed", description: res?.message || "Could not delete activity.", variant: "destructive" });
+      }
+    },
+  });
+
+  // Trip Delete Mutation
+  const tripDeleteMutation = useMutation({
+    mutationFn: (tripId: string) => deleteTrip(tripId),
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast({ title: "Trip Moderated", description: "Trip deleted from platform." });
+        setDeleteConfirm(null);
+        queryClient.invalidateQueries({ queryKey: ["adminTrips"] });
+        queryClient.invalidateQueries({ queryKey: ["adminAnalytics"] });
+      } else {
+        toast({ title: "Delete Failed", description: res?.message || "Could not delete trip.", variant: "destructive" });
+      }
+    },
+  });
+
+  const handleOpenCreateCity = () => {
+    setEditingCity(null);
+    setCityFormData({
+      name: "",
+      country: "",
+      region: "",
+      costIndex: 50,
+      popularity: 0,
+      imageUrl: "",
+    });
+    setCityImageFile(null);
+    setIsCityModalOpen(true);
+  };
+
+  const handleOpenEditCity = (city: AdminPopularDestination) => {
+    setEditingCity(city);
+    setCityFormData({
+      name: city.name,
+      country: city.country,
+      region: city.region || "",
+      costIndex: city.costIndex || 50,
+      popularity: city.popularity || 0,
+      imageUrl: city.imageUrl || "",
+    });
+    setCityImageFile(null);
+    setIsCityModalOpen(true);
+  };
+
+  const handleOpenCreateActivity = () => {
+    setEditingActivity(null);
+    setActivityFormData({
+      cityId: popularCitiesRes?.data?.[0]?.id || "",
+      name: "",
+      description: "",
+      category: "SIGHTSEEING",
+      cost: 0,
+      durationMin: 60,
+      imageUrl: "",
+    });
+    setActivityImageFile(null);
+    setIsActivityModalOpen(true);
+  };
+
+  const handleOpenEditActivity = (act: AdminPopularActivity) => {
+    setEditingActivity(act);
+    setActivityFormData({
+      cityId: act.cityId || "",
+      name: act.name,
+      description: act.description || "",
+      category: act.category || "SIGHTSEEING",
+      cost: act.cost || 0,
+      durationMin: act.durationMin || 60,
+      imageUrl: act.imageUrl || "",
+    });
+    setActivityImageFile(null);
+    setIsActivityModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteConfirm) return;
+    if (deleteConfirm.type === "city") {
+      cityDeleteMutation.mutate(deleteConfirm.id);
+    } else if (deleteConfirm.type === "activity") {
+      activityDeleteMutation.mutate(deleteConfirm.id);
+    } else if (deleteConfirm.type === "trip") {
+      tripDeleteMutation.mutate(deleteConfirm.id);
+    }
+  };
+
   const analyticsData: AdminAnalyticsData | undefined = analyticsRes?.data;
   const popularCities: AdminPopularDestination[] = popularCitiesRes?.data || [];
   const popularActivitiesData = popularActivitiesRes?.data;
@@ -201,6 +448,12 @@ export default function AdminDashboardPage() {
     if (activeTab === "activities") refetchActivities();
     if (activeTab === "trips") refetchTrips();
     toast({ title: "Refreshed", description: "Admin data updated to live state." });
+  };
+
+  const handleLogout = () => {
+    cookies.remove("token");
+    toast({ title: "Signed out", description: "Logged out from admin panel." });
+    router.push("/auth");
   };
 
   // Donut chart calculations
@@ -252,16 +505,25 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E7E0D4] bg-white hover:bg-[#F1EDE6] text-[13px] font-medium text-[#5C5468] transition-colors cursor-pointer"
+            title="Go to main traveler app"
+          >
+            <Compass className="w-3.5 h-3.5 text-[#714B67]" />
+            <span className="hidden sm:inline">Main App</span>
+          </Link>
+
           <button
             onClick={handleRefreshCurrentTab}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E7E0D4] bg-white hover:bg-[#F1EDE6] text-[13px] font-medium text-[#5C5468] transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 text-[#714B67]" />
-            <span className="hidden sm:inline">Refresh Data</span>
+            <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          <div className="flex items-center gap-2 pl-3 border-l border-[#E7E0D4]">
+          <div className="flex items-center gap-2.5 pl-3 border-l border-[#E7E0D4]">
             <div className="w-8 h-8 rounded-full bg-[#F1E7EE] border border-[#714B67]/30 flex items-center justify-center text-[#714B67] font-semibold text-[13px]">
               {currentUser?.firstName?.charAt(0) || "A"}
             </div>
@@ -273,6 +535,15 @@ export default function AdminDashboardPage() {
                 ● Super Admin
               </p>
             </div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#E7E0D4] bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-[13px] font-medium text-[#5C5468] transition-colors cursor-pointer ml-1"
+              title="Sign out from admin panel"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
           </div>
         </div>
       </header>
@@ -823,9 +1094,16 @@ export default function AdminDashboardPage() {
                   Top Visited & Trending Destinations
                 </h2>
                 <p className="text-[13px] text-[#5C5468]">
-                  Cities ranked by itinerary stops, user wishlists, and logged travel spend.
+                  Manage official global cities catalog, rankings, and destination imagery.
                 </p>
               </div>
+              <button
+                onClick={handleOpenCreateCity}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Official City</span>
+              </button>
             </div>
 
             {isCitiesLoading ? (
@@ -835,7 +1113,7 @@ export default function AdminDashboardPage() {
                 {popularCities.map((city, idx) => (
                   <div
                     key={city.id}
-                    className="bg-white rounded-xl border border-[#E7E0D4] overflow-hidden shadow-xs hover:border-[#714B67]/40 hover:shadow-md transition-all flex flex-col justify-between"
+                    className="bg-white rounded-xl border border-[#E7E0D4] overflow-hidden shadow-xs hover:border-[#714B67]/40 hover:shadow-md transition-all flex flex-col justify-between group"
                   >
                     <div>
                       {/* Image Header */}
@@ -854,8 +1132,21 @@ export default function AdminDashboardPage() {
                         <div className="absolute top-3 left-3 bg-[#241B2F]/80 backdrop-blur-xs text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-md">
                           #{idx + 1}
                         </div>
-                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs text-[#714B67] text-[11px] font-semibold px-2 py-0.5 rounded-md">
-                          {city.region || "Global"}
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditCity(city)}
+                            className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-[#714B67] flex items-center justify-center shadow-xs transition-all cursor-pointer"
+                            title="Edit City"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm({ type: "city", id: city.id, name: city.name })}
+                            className="w-7 h-7 rounded-lg bg-white/90 hover:bg-red-50 text-red-600 flex items-center justify-center shadow-xs transition-all cursor-pointer"
+                            title="Delete City"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
@@ -864,7 +1155,7 @@ export default function AdminDashboardPage() {
                         <h3 className={`${spaceGrotesk.className} text-[18px] font-bold text-[#241B2F]`}>
                           {city.name}
                         </h3>
-                        <p className="text-[13px] text-[#5C5468]">{city.country}</p>
+                        <p className="text-[13px] text-[#5C5468]">{city.country} {city.region ? `• ${city.region}` : ""}</p>
 
                         <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#E7E0D4] text-center">
                           <div className="p-2 rounded-lg bg-[#F1EDE6]">
@@ -907,13 +1198,22 @@ export default function AdminDashboardPage() {
            ══════════════════════════════════════════════════ */}
         {activeTab === "activities" && (
           <div className="space-y-6">
-            <div>
-              <h2 className={`${spaceGrotesk.className} text-[20px] font-bold text-[#241B2F]`}>
-                Popular Activities & Experiences
-              </h2>
-              <p className="text-[13px] text-[#5C5468]">
-                Top scheduled activities by travelers across multi-city itineraries.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className={`${spaceGrotesk.className} text-[20px] font-bold text-[#241B2F]`}>
+                  Popular Activities & Experiences
+                </h2>
+                <p className="text-[13px] text-[#5C5468]">
+                  Manage official activity catalog items for multi-city itinerary planning.
+                </p>
+              </div>
+              <button
+                onClick={handleOpenCreateActivity}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Official Activity</span>
+              </button>
             </div>
 
             {isActivitiesLoading ? (
@@ -929,7 +1229,8 @@ export default function AdminDashboardPage() {
                         <th className="py-3 px-4">Category</th>
                         <th className="py-3 px-4">Cost</th>
                         <th className="py-3 px-4">Duration</th>
-                        <th className="py-3 px-4 text-right">Scheduled Count</th>
+                        <th className="py-3 px-4 text-center">Scheduled Count</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E7E0D4]">
@@ -957,8 +1258,26 @@ export default function AdminDashboardPage() {
                           <td className={`${ibmPlexMono.className} py-3 px-4 text-[#5C5468]`}>
                             {act.durationMin} mins
                           </td>
-                          <td className={`${ibmPlexMono.className} py-3 px-4 font-bold text-[#2F7A6F] text-right`}>
+                          <td className={`${ibmPlexMono.className} py-3 px-4 font-bold text-[#2F7A6F] text-center`}>
                             {act.scheduledCount} times
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleOpenEditActivity(act)}
+                                className="p-1.5 rounded-lg border border-[#E7E0D4] bg-white hover:bg-[#F1EDE6] text-[#714B67] transition-colors cursor-pointer"
+                                title="Edit Activity"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm({ type: "activity", id: act.id, name: act.name })}
+                                className="p-1.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-600 transition-colors cursor-pointer"
+                                title="Delete Activity"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1216,8 +1535,17 @@ export default function AdminDashboardPage() {
                           {trip.stopsCount}
                         </span>
                       </div>
-                      <div className={`${ibmPlexMono.className} text-[13px] font-bold text-[#2F7A6F]`}>
-                        ${trip.totalExpense.toFixed(2)}
+                      <div className="flex items-center gap-3">
+                        <div className={`${ibmPlexMono.className} text-[13px] font-bold text-[#2F7A6F]`}>
+                          ${trip.totalExpense.toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => setDeleteConfirm({ type: "trip", id: trip.id, name: trip.name })}
+                          className="p-1 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                          title="Delete / Moderate Trip"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1227,6 +1555,354 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </main>
+
+      {/* ══════════════════════════════════════════════════
+          CITY CREATE / EDIT MODAL
+         ══════════════════════════════════════════════════ */}
+      {isCityModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-[#E7E0D4] shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#E7E0D4] flex items-center justify-between bg-[#FAF8F5]">
+              <h3 className={`${spaceGrotesk.className} text-[18px] font-bold text-[#241B2F]`}>
+                {editingCity ? "Edit Official City" : "Add New Official City"}
+              </h3>
+              <button
+                onClick={() => setIsCityModalOpen(false)}
+                className="p-1 rounded-lg text-[#9A93A6] hover:text-[#241B2F] hover:bg-[#F1EDE6] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                citySaveMutation.mutate();
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                  City Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Paris"
+                  value={cityFormData.name}
+                  onChange={(e) => setCityFormData({ ...cityFormData, name: e.target.value })}
+                  className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Country *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. France"
+                    value={cityFormData.country}
+                    onChange={(e) => setCityFormData({ ...cityFormData, country: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Region
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Europe"
+                    value={cityFormData.region}
+                    onChange={(e) => setCityFormData({ ...cityFormData, region: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Cost Index (0-100)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={cityFormData.costIndex}
+                    onChange={(e) => setCityFormData({ ...cityFormData, costIndex: Number(e.target.value) })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Popularity Score
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={cityFormData.popularity}
+                    onChange={(e) => setCityFormData({ ...cityFormData, popularity: Number(e.target.value) })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                  City Image (Upload File or URL)
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setCityImageFile(e.target.files[0]);
+                      }
+                    }}
+                    className="block w-full text-[12px] text-[#5C5468] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[12px] file:font-semibold file:bg-[#F1E7EE] file:text-[#714B67] hover:file:bg-[#E7D6E2]"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Or enter image URL (https://...)"
+                    value={cityFormData.imageUrl}
+                    onChange={(e) => setCityFormData({ ...cityFormData, imageUrl: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#E7E0D4] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCityModalOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-[#E7E0D4] text-[13px] font-medium text-[#5C5468] hover:bg-[#FAF8F5] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={citySaveMutation.isPending}
+                  className="px-4 py-2 rounded-lg bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {citySaveMutation.isPending ? "Saving..." : editingCity ? "Save Changes" : "Create City"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          ACTIVITY CREATE / EDIT MODAL
+         ══════════════════════════════════════════════════ */}
+      {isActivityModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-[#E7E0D4] shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#E7E0D4] flex items-center justify-between bg-[#FAF8F5]">
+              <h3 className={`${spaceGrotesk.className} text-[18px] font-bold text-[#241B2F]`}>
+                {editingActivity ? "Edit Official Activity" : "Add New Official Activity"}
+              </h3>
+              <button
+                onClick={() => setIsActivityModalOpen(false)}
+                className="p-1 rounded-lg text-[#9A93A6] hover:text-[#241B2F] hover:bg-[#F1EDE6] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                activitySaveMutation.mutate();
+              }}
+              className="p-6 space-y-4"
+            >
+              {!editingActivity && (
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Target City *
+                  </label>
+                  <select
+                    required
+                    value={activityFormData.cityId}
+                    onChange={(e) => setActivityFormData({ ...activityFormData, cityId: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67] cursor-pointer"
+                  >
+                    <option value="" disabled>Select a city</option>
+                    {popularCities.map((city) => (
+                      <option key={city.id} value={city.id}>
+                        {city.name}, {city.country}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                  Activity Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Eiffel Tower Guided Tour"
+                  value={activityFormData.name}
+                  onChange={(e) => setActivityFormData({ ...activityFormData, name: e.target.value })}
+                  className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Category *
+                  </label>
+                  <select
+                    value={activityFormData.category}
+                    onChange={(e) => setActivityFormData({ ...activityFormData, category: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67] cursor-pointer"
+                  >
+                    <option value="SIGHTSEEING">SIGHTSEEING</option>
+                    <option value="FOOD">FOOD</option>
+                    <option value="CULTURE">CULTURE</option>
+                    <option value="ADVENTURE">ADVENTURE</option>
+                    <option value="RELAXATION">RELAXATION</option>
+                    <option value="SHOPPING">SHOPPING</option>
+                    <option value="NIGHTLIFE">NIGHTLIFE</option>
+                    <option value="OTHER">OTHER</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Cost ($)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={activityFormData.cost}
+                    onChange={(e) => setActivityFormData({ ...activityFormData, cost: Number(e.target.value) })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                    Duration (mins) *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={activityFormData.durationMin}
+                    onChange={(e) => setActivityFormData({ ...activityFormData, durationMin: Number(e.target.value) })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Short description of the activity..."
+                  value={activityFormData.description}
+                  onChange={(e) => setActivityFormData({ ...activityFormData, description: e.target.value })}
+                  className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67] resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
+                  Activity Image (Upload File or URL)
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setActivityImageFile(e.target.files[0]);
+                      }
+                    }}
+                    className="block w-full text-[12px] text-[#5C5468] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[12px] file:font-semibold file:bg-[#F1E7EE] file:text-[#714B67] hover:file:bg-[#E7D6E2]"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Or enter image URL (https://...)"
+                    value={activityFormData.imageUrl}
+                    onChange={(e) => setActivityFormData({ ...activityFormData, imageUrl: e.target.value })}
+                    className="w-full bg-[#FAF8F5] border border-[#E7E0D4] rounded-lg px-3 py-2 text-[13.5px] text-[#241B2F] outline-none focus:border-[#714B67]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#E7E0D4] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsActivityModalOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-[#E7E0D4] text-[13px] font-medium text-[#5C5468] hover:bg-[#FAF8F5] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={activitySaveMutation.isPending}
+                  className="px-4 py-2 rounded-lg bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {activitySaveMutation.isPending ? "Saving..." : editingActivity ? "Save Changes" : "Create Activity"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          DELETE CONFIRMATION MODAL
+         ══════════════════════════════════════════════════ */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-[#E7E0D4] shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className={`${spaceGrotesk.className} text-[18px] font-bold text-[#241B2F]`}>
+              Confirm Deletion
+            </h3>
+            <p className="text-[13px] text-[#5C5468] mt-2">
+              Are you sure you want to delete <span className="font-semibold text-[#241B2F]">"{deleteConfirm.name}"</span>? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 rounded-lg border border-[#E7E0D4] text-[13px] font-medium text-[#5C5468] hover:bg-[#FAF8F5] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={cityDeleteMutation.isPending || activityDeleteMutation.isPending || tripDeleteMutation.isPending}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

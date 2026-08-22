@@ -8,6 +8,8 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { getMe } from "@/src/libs/interaction/dataGetter";
 import { User } from "@/src/libs/types";
 
+import { Shield } from "lucide-react";
+
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["500", "600"] });
 
@@ -124,6 +126,16 @@ export function AppNav() {
         <div className="flex items-center gap-2.5 sm:gap-3">
           {isAuthenticated ? (
             <>
+              {user?.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  id="nav-admin-link"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold text-white bg-[#714B67] hover:bg-[#4E3347] transition-all shadow-xs ${inter.className}`}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Admin Panel</span>
+                </Link>
+              )}
               <Link
                 href="/profile"
                 id="nav-profile-link"
