@@ -124,7 +124,6 @@ export const createActivity = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Check if city exists
     const city = await prisma.city.findUnique({ where: { id: cityId } });
     if (!city) {
       res.status(404).json(createResponse(false, 'Target city does not exist', null));
