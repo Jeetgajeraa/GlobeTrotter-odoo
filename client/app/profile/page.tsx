@@ -12,6 +12,7 @@ import { getMe, getUserTrips } from "@/src/libs/interaction/dataGetter";
 import { patchMe } from "@/src/libs/interaction/dataPatcher";
 import { useToast } from "@/src/hooks/useToast";
 import { User, UpdateProfilePayload, Trip } from "@/src/libs/types";
+import { formatINR } from "@/src/libs/utils";
 
 /* ── Fonts ─────────────────────────────────── */
 const spaceGrotesk = Space_Grotesk({
@@ -538,7 +539,7 @@ function ProfileContent({
                 cover={getTripCover(trip)}
                 badge="Completed"
                 badgeColor="horizon"
-                extraMono={trip.totalExpense > 0 ? `$${trip.totalExpense}` : undefined}
+                extraMono={trip.totalExpense > 0 ? formatINR(trip.totalExpense) : undefined}
               />
             ))}
           </div>

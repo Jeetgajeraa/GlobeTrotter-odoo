@@ -23,7 +23,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
   OTHER:      { bg: "#FAF8F5", text: "#5C5468", border: "#E7E0D4", bar: "#714B67" },
 };
 function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
 }
 function formatDate(dateStr: string): string {
   try {
@@ -574,7 +574,7 @@ export default function TripBudgetPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[12px] font-bold text-[#241B2F] uppercase tracking-wider mb-1.5">
-                      Amount ($) <span className="text-[#C0392B]">*</span>
+                      Amount (₹) <span className="text-[#C0392B]">*</span>
                     </label>
                     <input
                       type="number"

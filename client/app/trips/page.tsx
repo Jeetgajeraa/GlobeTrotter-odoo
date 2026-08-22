@@ -31,7 +31,7 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 function fmtMoney(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 }
 function tripDays(start: string, end: string) {
   const diff = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000);

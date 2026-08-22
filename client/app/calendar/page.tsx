@@ -20,6 +20,8 @@ import {
 import { AppNav } from "@/src/components/AppNav";
 import { getUserCalendar, getMe, getTripTimeline } from "@/src/libs/interaction/dataGetter";
 import { useToast } from "@/src/hooks/useToast";
+import { formatINR } from "@/src/libs/utils";
+
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -760,7 +762,7 @@ export default function CalendarViewPage() {
                                           </div>
                                         </div>
                                         <div className={`${ibmPlexMono.className} text-[12px] font-bold text-[#2F7A6F] shrink-0`}>
-                                          {act.cost > 0 ? `$${act.cost}` : "Free"}
+                                          {act.cost > 0 ? formatINR(act.cost) : "Free"}
                                         </div>
                                       </div>
                                     );

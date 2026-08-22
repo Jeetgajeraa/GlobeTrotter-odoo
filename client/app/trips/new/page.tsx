@@ -9,6 +9,8 @@ import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 
 import { AppNav } from "@/src/components/AppNav";
 import { getCities, getActivities } from "@/src/libs/interaction/dataGetter";
+import { formatINR } from "@/src/libs/utils";
+
 import { createTrip, addStop, addStopActivity } from "@/src/libs/interaction/dataPoster";
 import { useToast } from "@/src/hooks/useToast";
 import { City, Activity, ActivityCategory } from "@/src/libs/types";
@@ -664,7 +666,7 @@ export default function CreateTripPage() {
 
                         {/* Cost Tag */}
                         <span className={`absolute top-2.5 right-2.5 bg-white/90 text-[#714B67] text-[11px] font-bold px-2 py-0.5 rounded-lg shadow-sm ${ibmPlexMono.className}`}>
-                          {act.cost === 0 ? "Free" : `$${act.cost}`}
+                          {act.cost === 0 ? "Free" : formatINR(act.cost)}
                         </span>
 
                         {/* Selection Checkmark */}

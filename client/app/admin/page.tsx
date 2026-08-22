@@ -57,6 +57,8 @@ import {
   deleteTrip,
 } from "@/src/libs/interaction/dataDeleter";
 import { useToast } from "@/src/hooks/useToast";
+import { formatINR } from "@/src/libs/utils";
+
 import type {
   AdminAnalyticsData,
   AdminPopularDestination,
@@ -1253,7 +1255,7 @@ export default function AdminDashboardPage() {
                             </span>
                           </td>
                           <td className={`${ibmPlexMono.className} py-3 px-4 font-semibold text-[#241B2F]`}>
-                            ${act.cost.toFixed(2)}
+                            {formatINR(act.cost)}
                           </td>
                           <td className={`${ibmPlexMono.className} py-3 px-4 text-[#5C5468]`}>
                             {act.durationMin} mins
@@ -1782,7 +1784,7 @@ export default function AdminDashboardPage() {
 
                 <div>
                   <label className="block text-[11.5px] font-semibold text-[#5C5468] uppercase tracking-wider mb-1">
-                    Cost ($)
+                    Cost (₹)
                   </label>
                   <input
                     type="number"

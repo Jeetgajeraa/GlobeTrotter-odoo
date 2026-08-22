@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 
 import { AppNav } from "@/src/components/AppNav";
+import { formatINR } from "@/src/libs/utils";
+
 import { getTripById } from "@/src/libs/interaction/dataGetter";
 import { apiClient } from "@/src/libs/interaction";
 import { BASE_URL } from "@/src/libs/constants";
@@ -398,7 +400,7 @@ export default function TripItineraryViewPage() {
                                       </div>
 
                                       <span className={`text-xs font-bold text-[#241B2F] ${ibmPlexMono.className}`}>
-                                        {cost === 0 ? "Free" : `$${cost}`}
+                                        {cost === 0 ? "Free" : formatINR(cost)}
                                       </span>
                                     </div>
                                   );
@@ -459,7 +461,7 @@ export default function TripItineraryViewPage() {
 
                           <div className="text-right">
                             <p className={`text-xs font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                              {cost === 0 ? "Free" : `$${cost}`}
+                              {cost === 0 ? "Free" : formatINR(cost)}
                             </p>
                             {sa.startTime && (
                               <p className={`text-[10px] text-[#9A93A6] ${ibmPlexMono.className}`}>

@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 
 import { getTripById, getCities, getActivities } from "@/src/libs/interaction/dataGetter";
+import { formatINR } from "@/src/libs/utils";
+
 import { addStop, addStopActivity } from "@/src/libs/interaction/dataPoster";
 import { updateStop, reorderStops } from "@/src/libs/interaction/dataPatcher";
 import { deleteStop, deleteStopActivity } from "@/src/libs/interaction/dataDeleter";
@@ -400,9 +402,6 @@ export default function ItineraryBuilderPage() {
               <h1 className={`text-[18px] sm:text-[20px] font-bold text-[#241B2F] tracking-tight truncate max-w-[240px] sm:max-w-[400px] ${spaceGrotesk.className}`}>
                 {trip?.name || "Trip Planner"}
               </h1>
-              <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold uppercase bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] ${ibmPlexMono.className}`}>
-                ITINERARY BUILDER
-              </span>
             </div>
             <p className="text-[12px] text-[#5C5468] flex items-center gap-2 mt-0.5">
               <span>🗓 {trip?.startDate ? formatDateDisplay(trip.startDate) : "TBD"} – {trip?.endDate ? formatDateDisplay(trip.endDate) : "TBD"}</span>
@@ -720,7 +719,7 @@ export default function ItineraryBuilderPage() {
                                         <span className={ibmPlexMono.className}>⏱ {Math.floor(act.durationMin / 60)}h {act.durationMin % 60 ? `${act.durationMin % 60}m` : ""}</span>
                                       )}
                                       <span className={`font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                                        ${cost}
+                                        {cost === 0 ? 'Free' : formatINR(cost)}
                                       </span>
                                     </div>
                                   </div>
@@ -925,7 +924,7 @@ export default function ItineraryBuilderPage() {
                               <p className="text-[11px] text-[#5C5468] mt-0.5">{act.category} · ⏱ {act.durationMin} mins</p>
                             </div>
                             <span className={`text-[12px] font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                              ${act.cost}
+                              {act.cost === 0 ? 'Free' : formatINR(act.cost)}
                             </span>
                           </div>
                         );
@@ -978,7 +977,7 @@ export default function ItineraryBuilderPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-[#241B2F] uppercase mb-1">Cost ($)</label>
+                      <label className="block text-[11px] font-bold text-[#241B2F] uppercase mb-1">Cost (₹)</label>
                       <input
                         type="number"
                         value={customCost}

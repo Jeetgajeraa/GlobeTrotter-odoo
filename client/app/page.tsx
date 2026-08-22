@@ -6,6 +6,7 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { AppNav } from "@/src/components/AppNav";
 import { getCities, getUserTrips, getActivities } from "@/src/libs/interaction/dataGetter";
 import { City, Trip, Activity } from "@/src/libs/types";
+import { formatINR } from "@/src/libs/utils";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -1257,7 +1258,7 @@ function RealActivityCard({
             color: "#241B2F",
           }}
         >
-          <span>{activity.cost > 0 ? `$${activity.cost}` : "Free"}</span>
+          <span>{activity.cost > 0 ? formatINR(activity.cost) : "Free"}</span>
           <span style={{ color: "#9A93A6" }}>{activity.durationMin} min</span>
         </div>
       </div>
