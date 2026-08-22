@@ -55,6 +55,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
+    // Determine profile photo URL (from Cloudinary upload or optional URL string in body)
+    let finalProfilePhoto: string | null = null;
+    if (req.file && (req.file as any).path) {
+      finalProfilePhoto = (req.file as any).path;
+    } else if (profilePhoto) {
+      finalProfilePhoto = String(profilePhoto).trim();
+    }
+
     const newUser = await prisma.user.create({
       data: {
         firstName: firstName.trim(),
@@ -65,7 +73,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         city: city ? String(city).trim() : null,
         country: country ? String(country).trim() : null,
         bio: bio ? String(bio).trim() : null,
-        profilePhoto: profilePhoto ? String(profilePhoto).trim() : null,
+        profilePhoto: finalProfilePhoto,
       }
     });
 
