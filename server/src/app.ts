@@ -7,6 +7,7 @@ import destinationRoutes from './routes/destination.routes.js';
 import tripRoutes from './routes/trip.routes.js';
 import itineraryRoutes from './routes/itinerary.routes.js';
 import expenseRoutes from './routes/expense.routes.js';
+import calendarRoutes from './routes/calendar.routes.js';
 
 const app = express();
 
@@ -36,6 +37,8 @@ app.use('/api/destinations', destinationRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api', itineraryRoutes);
 app.use('/api', expenseRoutes);
+app.use('/api', calendarRoutes);
+
 
 
 
