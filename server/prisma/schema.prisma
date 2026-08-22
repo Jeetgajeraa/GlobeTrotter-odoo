@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ActivityCategory {
+  SIGHTSEEING
+  FOOD
+  ADVENTURE
+  CULTURE
+  NIGHTLIFE
+  RELAXATION
+  SHOPPING
+  TRANSPORT
+  OTHER
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  STAY
+  ACTIVITY
+  MEALS
+  OTHER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  profilePhoto  String?
+  language      String    @default("en")
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  trips             Trip[]
+  savedDestinations SavedDestination[]
+
+  @@map("users")
+}
+
+model SavedDestination {
+  id        String   @id @default(cuid())
+  userId    String
+  cityId    String
+  createdAt DateTime @default(now())
+
+  user City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cityId])
+  @@map("saved_destinations")
+}
+
+model Trip {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  coverPhoto  String?
+  startDate   DateTime
+  endDate     DateTime
+  isPublic    Boolean  @default(false)
+  shareSlug   String?  @unique // used for the Shared/Public Itinerary View
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stops    Stop[]
+  expenses Expense[]
+
+  @@index([userId])
+  @@map("trips")
+}
+
+model Stop {
+  id        String   @id @default(cuid())
+  tripId    String
+  cityId    String
+  startDate DateTime
+  endDate   DateTime
+  order     Int      // sequence of the stop within the trip, for reordering
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trip           Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  city           City           @relation(fields: [cityId], references: [id])
+  stopActivities StopActivity[]
+  expenses       Expense[]
+
+  @@index([tripId])
+  @@index([cityId])
+  @@map("stops")
+}
+
+model City {
+  id         String  @id @default(cuid())
+  name       String
+  country    String
+  region     String?
+  costIndex  Float   // relative cost-of-living index, used in City Search
+  popularity Int     @default(0) // used for ranking/recommended destinations
+  imageUrl   String?
+
+  stops             Stop[]
+  activities        Activity[]
+  savedByUsers      SavedDestination[]
+
+  @@unique([name, country])
+  @@index([country])
+  @@map("cities")
+}
+
+model Activity {
+  id          String           @id @default(cuid())
+  cityId      String
+  name        String
+  description String?
+  category    ActivityCategory @default(OTHER)
+  cost        Float            @default(0)
+  durationMin Int              // duration in minutes, for scheduling
+  imageUrl    String?
+
+  city           City           @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  stopActivities StopActivity[]
+
+  @@index([cityId])
+  @@index([category])
+  @@map("activities")
+}
+
+model StopActivity {
+  id            String    @id @default(cuid())
+  stopId        String
+  activityId    String
+  scheduledDate DateTime // the specific day within the stop
+  startTime     String? // e.g. "14:30" — kept simple for calendar rendering
+  order         Int      // position within the day, for drag-to-reorder
+  costOverride  Float?   // lets a user override the catalog activity cost
+
+  stop     Stop     @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@index([stopId])
+  @@index([activityId])
+  @@map("stop_activities")
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  tripId      String
+  stopId      String?
+  category    ExpenseCategory
+  amount      Float
+  date        DateTime
+  description String?
+  createdAt   DateTime        @default(now())
+
+  trip Trip  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  stop Stop? @relation(fields: [stopId], references: [id], onDelete: SetNull)
+
+  @@index([tripId])
+  @@index([stopId])
+  @@index([category])
+  @@map("expenses")
+}
