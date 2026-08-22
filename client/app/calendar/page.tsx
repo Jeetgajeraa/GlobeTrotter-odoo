@@ -11,6 +11,7 @@ import {
   MapPin,
   Eye,
   X,
+  Compass,
 } from "lucide-react";
 
 import { AppNav } from "@/src/components/AppNav";
