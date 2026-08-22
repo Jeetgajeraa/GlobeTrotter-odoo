@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { createResponse } from './utils/api-response';
+import { createResponse } from './utils/api-response.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Good' });
 });
+
+app.use('/api/auth', authRoutes);
+
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json(createResponse(false, 'Route not found', null));
