@@ -146,21 +146,41 @@ export default function TripsPage() {
           <h1 className={`text-[30px] font-semibold text-[#241B2F] tracking-tight ${spaceGrotesk.className}`}>
             My trips
           </h1>
-          <Link
-            href="/trips/new"
-            id="plan-new-trip-btn"
-            className="h-11 px-5 bg-[#714B67] hover:bg-[#4E3347] active:scale-[0.98]
-              text-white font-semibold text-[14px] rounded-lg
-              flex items-center gap-2 transition-all duration-150
-              outline-none focus-visible:shadow-[0_0_0_3px_#F1E7EE]
-              shadow-[0_4px_12px_rgba(113,75,103,0.22)]"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <line x1="7" y1="1" x2="7" y2="13" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-              <line x1="1" y1="7" x2="13" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
-            Plan new trip
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/calendar"
+              id="calendar-view-btn"
+              className="h-11 px-4 bg-white hover:bg-[#F1E7EE] active:scale-[0.98]
+                text-[#714B67] font-semibold text-[14px] rounded-lg
+                flex items-center gap-2 transition-all duration-150
+                outline-none focus-visible:shadow-[0_0_0_3px_#F1E7EE]
+                border border-[#714B67]/30 hover:border-[#714B67]"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="#714B67" strokeWidth="1.4"/>
+                <line x1="1.5" y1="6" x2="14.5" y2="6" stroke="#714B67" strokeWidth="1.4"/>
+                <line x1="5" y1="1" x2="5" y2="4" stroke="#714B67" strokeWidth="1.4" strokeLinecap="round"/>
+                <line x1="11" y1="1" x2="11" y2="4" stroke="#714B67" strokeWidth="1.4" strokeLinecap="round"/>
+                <circle cx="8" cy="10" r="1.2" fill="#714B67"/>
+              </svg>
+              Calendar
+            </Link>
+            <Link
+              href="/trips/new"
+              id="plan-new-trip-btn"
+              className="h-11 px-5 bg-[#714B67] hover:bg-[#4E3347] active:scale-[0.98]
+                text-white font-semibold text-[14px] rounded-lg
+                flex items-center gap-2 transition-all duration-150
+                outline-none focus-visible:shadow-[0_0_0_3px_#F1E7EE]
+                shadow-[0_4px_12px_rgba(113,75,103,0.22)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <line x1="7" y1="1" x2="7" y2="13" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                <line x1="1" y1="7" x2="13" y2="7" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              Plan new trip
+            </Link>
+          </div>
         </div>
 
         {/* ── Search + Sort bar ───────────────────── */}

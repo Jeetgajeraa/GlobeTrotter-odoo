@@ -118,9 +118,38 @@ export async function getActivities(params?: {
 
 /**
  * ──────────────────────────────────────────────
+ * CALENDAR & TIMELINE GETTERS (Screen 11)
+ * ──────────────────────────────────────────────
+ */
+
+export async function getUserCalendar(params: { year?: number; month?: number } = {}) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/calendar`, {
+      params,
+    });
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+export async function getTripTimeline(tripId: string) {
+  try {
+    const { data } = await apiClient.get(`${BASE_URL}/api/trips/${tripId}/calendar`);
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
+
+/**
+ * ──────────────────────────────────────────────
  * ADMIN GETTERS (Screen 12)
  * ──────────────────────────────────────────────
  */
+
 
 export async function getAdminAnalytics() {
   try {
