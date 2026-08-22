@@ -133,20 +133,31 @@ export default function ItineraryBuilderPage() {
     queryKey: ["cities"],
     queryFn: async () => {
       const res = await getCities();
-      if (res?.success) return extractCities(res.data);
+      const raw = res?.data as any;
+      if (raw) {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.cities)) return raw.cities;
+      }
       return [];
     },
   });
+  const availableCities = citiesData || [];
   const availableCities = citiesData || [];
 
   const { data: activitiesData } = useQuery({
     queryKey: ["activities", activeStop?.cityId],
     queryFn: async () => {
-      const res = await getActivities({ cityId: activeStop?.cityId });
-      if (res?.success) return extractActivities(res.data);
+      if (!activeStop?.cityId) return [];
+      const res = await getActivities({ cityId: activeStop.cityId });
+      const raw = res?.data as any;
+      if (raw) {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.activities)) return raw.activities;
+      }
       return [];
     },
   });
+  const availableActivities = activitiesData || [];
   const availableActivities = activitiesData || [];
 
   /* ── Computed Overall Trip Metrics ── */
@@ -264,7 +275,13 @@ export default function ItineraryBuilderPage() {
 
   const handleOpenAddActivity = (dayDate: string) => {
     setSelectedDayForActivity(dayDate);
-    setPickedActivityId(availableActivities[0]?.id || "");
+    if (availableActivities && availableActivities.length > 0) {
+      setActivityMode("catalog");
+      setPickedActivityId(availableActivities[0].id);
+    } else {
+      setActivityMode("custom");
+      setPickedActivityId("");
+    }
     setCustomTitle("");
     setActivityTime("10:00");
     setIsAddActivityModalOpen(true);
@@ -897,33 +914,41 @@ export default function ItineraryBuilderPage() {
                   <label className="block text-[12px] font-bold text-[#241B2F] uppercase tracking-wider mb-1.5">
                     Select from Curated Experiences
                   </label>
-                  {availableActivities.length === 0 ? (
-                    <div className="p-3 rounded-xl border border-dashed border-[#D6CCBC] bg-[#FAF8F5] text-[12px] text-[#5C5468]">
-                      No activities available for this city in the database.
+                  {availableActivities.length > 0 ? (
+                    <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                      {availableActivities.map((act: Activity) => {
+                        const isPicked = pickedActivityId === act.id;
+                        return (
+                          <div
+                            key={act.id}
+                            onClick={() => setPickedActivityId(act.id)}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                              isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
+                            }`}
+                          >
+                            <div>
+                              <p className="text-[13px] font-bold text-[#241B2F]">{act.name}</p>
+                              <p className="text-[11px] text-[#5C5468] mt-0.5">{act.category} · ⏱ {act.durationMin} mins</p>
+                            </div>
+                            <span className={`text-[12px] font-bold text-[#714B67] ${ibmPlexMono.className}`}>
+                              ${act.cost}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
-                  <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-                    {availableActivities.map((act) => {
-                      const isPicked = pickedActivityId === act.id;
-                      return (
-                        <div
-                          key={act.id}
-                          onClick={() => setPickedActivityId(act.id)}
-                          className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                            isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
-                          }`}
-                        >
-                          <div>
-                            <p className="text-[13px] font-bold text-[#241B2F]">{act.name}</p>
-                            <p className="text-[11px] text-[#5C5468] mt-0.5">{act.category} · ⏱ {act.durationMin} mins</p>
-                          </div>
-                          <span className={`text-[12px] font-bold text-[#714B67] ${ibmPlexMono.className}`}>
-                            ${act.cost}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                    <div className="p-4 bg-[#FAF8F5] border border-[#E7E0D4] rounded-xl text-center flex flex-col items-center gap-2">
+                      <p className="text-xs font-bold text-[#241B2F]">No curated activities found for this city</p>
+                      <p className="text-[11px] text-[#5C5468]">Switch to &quot;Custom Activity&quot; above to create your own experience!</p>
+                      <button
+                        type="button"
+                        onClick={() => setActivityMode("custom")}
+                        className="mt-1 px-3 py-1.5 bg-[#714B67] text-white text-[11px] font-semibold rounded-lg hover:bg-[#4E3347]"
+                      >
+                        Create Custom Activity →
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (

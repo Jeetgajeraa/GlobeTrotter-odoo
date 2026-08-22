@@ -5,7 +5,9 @@ import {
   UserProfileResponse,
   GroupedTripsResponse,
   TripsListResponse,
-  GetTripsParams,
+  GetTripsParams, CommunityPostsResponse,
+  SingleCommunityPostResponse,
+  GetCommunityPostsParams,
 } from "../types";
 import {
   GetTripResponse,
@@ -45,10 +47,10 @@ export async function getUserTrips(
 ): Promise<GroupedTripsResponse | TripsListResponse> {
   try {
     const query: Record<string, string> = {};
-    if (params.search)        query.search        = params.search;
-    if (params.status)        query.status        = params.status;
-    if (params.sortBy)        query.sortBy        = params.sortBy;
-    if (params.sortOrder)     query.sortOrder     = params.sortOrder;
+    if (params.search) query.search = params.search;
+    if (params.status) query.status = params.status;
+    if (params.sortBy) query.sortBy = params.sortBy;
+    if (params.sortOrder) query.sortOrder = params.sortOrder;
     if (params.groupByStatus) query.groupByStatus = "true";
 
     const { data } = await apiClient.get<GroupedTripsResponse | TripsListResponse>(
@@ -190,3 +192,51 @@ export async function getAdminAllTrips(params: {
   }
 }
 
+
+/**
+ * GET /api/community/posts
+ * Fetch community feed posts with searching, sorting, and filtering.
+ */
+export async function getCommunityPosts(
+  params?: GetCommunityPostsParams,
+): Promise<CommunityPostsResponse> {
+  try {
+    const query: Record<string, string> = {};
+    if (params?.search) query.search = params.search;
+    if (params?.tripId) query.tripId = params.tripId;
+    if (params?.userId) query.userId = params.userId;
+    if (params?.hasImage !== undefined) query.hasImage = String(params.hasImage);
+    if (params?.hasTrip !== undefined) query.hasTrip = String(params.hasTrip);
+    if (params?.sortBy) query.sortBy = params.sortBy;
+    if (params?.sortOrder) query.sortOrder = params.sortOrder;
+    if (params?.page) query.page = String(params.page);
+    if (params?.limit) query.limit = String(params.limit);
+
+    const { data } = await apiClient.get<CommunityPostsResponse>(
+      `${BASE_URL}/api/community/posts`,
+      { params: query },
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as CommunityPostsResponse;
+  }
+}
+
+/**
+ * GET /api/community/posts/:id
+ * Fetch single community post by ID.
+ */
+export async function getCommunityPostById(
+  id: string,
+): Promise<SingleCommunityPostResponse> {
+  try {
+    const { data } = await apiClient.get<SingleCommunityPostResponse>(
+      `${BASE_URL}/api/community/posts/${id}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as SingleCommunityPostResponse;
+  }
+}

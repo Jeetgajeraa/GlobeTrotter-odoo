@@ -35,3 +35,22 @@ export async function deleteStopActivity(
     return err.response?.data as BaseResponse;
   }
 }
+
+/**
+ * DELETE /api/community/posts/:id
+ * Deletes a community post.
+ */
+export async function deleteCommunityPost(
+  postId: string,
+): Promise<BaseResponse> {
+  try {
+    const { data } = await apiClient.delete<BaseResponse>(
+      `${BASE_URL}/api/community/posts/${postId}`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as BaseResponse;
+  }
+}
+
