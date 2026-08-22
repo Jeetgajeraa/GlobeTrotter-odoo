@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes.js';
 import cityRoutes from './routes/city.routes.js';
 import activityRoutes from './routes/activity.routes.js';
 import destinationRoutes from './routes/destination.routes.js';
+import tripRoutes from './routes/trip.routes.js';
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/destinations', destinationRoutes);
+app.use('/api/trips', tripRoutes);
+
 
 
 
