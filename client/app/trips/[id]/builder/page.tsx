@@ -13,7 +13,6 @@ import { updateStop, reorderStops } from "@/src/libs/interaction/dataPatcher";
 import { deleteStop, deleteStopActivity } from "@/src/libs/interaction/dataDeleter";
 import { useToast } from "@/src/hooks/useToast";
 import {
-  DetailedTrip,
   Stop,
   StopActivity,
   City,
@@ -38,23 +37,23 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string
   OTHER:       { bg: "#FAF8F5", text: "#5C5468", border: "#E7E0D4" },
 };
 
-/* ── Fallback Preset Data for instant seed / offline preview ── */
-const FALLBACK_CITIES: City[] = [
-  { id: "c-paris",     name: "Paris",     country: "France",    costIndex: 3, popularity: 98, imageUrl: "/dest_paris.png" },
-  { id: "c-bali",      name: "Bali",      country: "Indonesia", costIndex: 1.8, popularity: 95, imageUrl: "/dest_bali.png" },
-  { id: "c-tokyo",     name: "Tokyo",     country: "Japan",     costIndex: 3.2, popularity: 99, imageUrl: "/dest_tokyo.png" },
-  { id: "c-santorini", name: "Santorini", country: "Greece",    costIndex: 4, popularity: 92, imageUrl: "/dest_santorini.png" },
-  { id: "c-newyork",   name: "New York",  country: "USA",       costIndex: 4.2, popularity: 96, imageUrl: "/dest_newyork.png" },
-];
+function extractCities(resData: unknown): City[] {
+  if (!resData) return [];
+  if (Array.isArray(resData)) return resData as City[];
+  if (typeof resData === "object" && Array.isArray((resData as { cities?: City[] }).cities)) {
+    return (resData as { cities: City[] }).cities;
+  }
+  return [];
+}
 
-const FALLBACK_ACTIVITIES: Activity[] = [
-  { id: "a-1", cityId: "c-tokyo", name: "Shibuya Crossing & Izakaya Tour", category: "NIGHTLIFE", cost: 60, durationMin: 180, imageUrl: "/dest_tokyo.png", description: "Experience Tokyo's most iconic intersection followed by food alleys." },
-  { id: "a-2", cityId: "c-tokyo", name: "Senso-ji Temple & Asakusa Walk", category: "CULTURE", cost: 35, durationMin: 120, imageUrl: "/dest_tokyo.png", description: "Explore Tokyo's oldest temple and traditional street shops." },
-  { id: "a-3", cityId: "c-tokyo", name: "TeamLab Planets Digital Art Museum", category: "SIGHTSEEING", cost: 40, durationMin: 150, imageUrl: "/dest_tokyo.png", description: "Immerse in world-famous interactive light and mirror installations." },
-  { id: "a-4", cityId: "c-paris", name: "Eiffel Tower Sunset & Champagne", category: "SIGHTSEEING", cost: 55, durationMin: 120, imageUrl: "/dest_paris.png", description: "Breathtaking views over Paris during golden hour." },
-  { id: "a-5", cityId: "c-paris", name: "Louvre Museum Guided Tour", category: "CULTURE", cost: 45, durationMin: 180, imageUrl: "/dest_paris.png", description: "See the Mona Lisa, Venus de Milo, and French masterpieces." },
-  { id: "a-6", cityId: "c-bali",  name: "Ubud Monkey Forest & Rice Terraces", category: "ADVENTURE", cost: 30, durationMin: 240, imageUrl: "/dest_bali.png", description: "Walk through lush rainforests and UNESCO world heritage rice fields." },
-];
+function extractActivities(resData: unknown): Activity[] {
+  if (!resData) return [];
+  if (Array.isArray(resData)) return resData as Activity[];
+  if (typeof resData === "object" && Array.isArray((resData as { activities?: Activity[] }).activities)) {
+    return (resData as { activities: Activity[] }).activities;
+  }
+  return [];
+}
 
 /* ── Date Helpers ── */
 function getDaysArray(startStr: string, endStr: string): string[] {
@@ -108,41 +107,7 @@ export default function ItineraryBuilderPage() {
     queryFn: async () => {
       const res = await getTripById(tripId);
       if (res?.success && res.data) return res.data;
-      // Fallback Trip object for demo/offline resilience
-      return {
-        id: tripId,
-        name: "My Grand Journey",
-        description: "A wonderful multi-city exploration.",
-        coverPhoto: "/dest_paris.png",
-        startDate: new Date().toISOString().split("T")[0],
-        endDate: new Date(Date.now() + 86400000 * 9).toISOString().split("T")[0],
-        isPublic: false,
-        createdAt: new Date().toISOString(),
-        stops: [
-          {
-            id: "stop-sample-1",
-            tripId,
-            cityId: "c-paris",
-            startDate: new Date().toISOString().split("T")[0],
-            endDate: new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
-            order: 1,
-            city: FALLBACK_CITIES[0],
-            stopActivities: [
-              {
-                id: "sa-1",
-                stopId: "stop-sample-1",
-                activityId: "a-4",
-                scheduledDate: new Date().toISOString().split("T")[0],
-                startTime: "16:30",
-                order: 1,
-                costOverride: 55,
-                activity: FALLBACK_ACTIVITIES[3],
-              },
-            ],
-          },
-        ],
-        expenses: [],
-      } as DetailedTrip;
+      throw new Error(res?.message || "Failed to load trip.");
     },
   });
 
@@ -168,21 +133,21 @@ export default function ItineraryBuilderPage() {
     queryKey: ["cities"],
     queryFn: async () => {
       const res = await getCities();
-      if (res?.success && res.data && res.data.length > 0) return res.data;
-      return FALLBACK_CITIES;
+      if (res?.success) return extractCities(res.data);
+      return [];
     },
   });
-  const availableCities = citiesData || FALLBACK_CITIES;
+  const availableCities = citiesData || [];
 
   const { data: activitiesData } = useQuery({
     queryKey: ["activities", activeStop?.cityId],
     queryFn: async () => {
       const res = await getActivities({ cityId: activeStop?.cityId });
-      if (res?.success && res.data && res.data.length > 0) return res.data;
-      return FALLBACK_ACTIVITIES;
+      if (res?.success) return extractActivities(res.data);
+      return [];
     },
   });
-  const availableActivities = activitiesData || FALLBACK_ACTIVITIES;
+  const availableActivities = activitiesData || [];
 
   /* ── Computed Overall Trip Metrics ── */
   const totalDays = useMemo(() => {
@@ -310,6 +275,7 @@ export default function ItineraryBuilderPage() {
     mutationFn: async () => {
       if (!activeStop) throw new Error("No active stop selected.");
       if (activityMode === "catalog") {
+        if (!pickedActivityId) throw new Error("No activity available to add for this city.");
         return await addStopActivity(activeStop.id, {
           activityId: pickedActivityId,
           scheduledDate: selectedDayForActivity,
@@ -364,6 +330,28 @@ export default function ItineraryBuilderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
           <div className="lg:col-span-4 h-96 bg-white rounded-2xl animate-pulse border border-[#E7E0D4]" />
           <div className="lg:col-span-8 h-96 bg-white rounded-2xl animate-pulse border border-[#E7E0D4]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !trip) {
+    return (
+      <div className={`min-h-screen bg-[#FAF8F5] p-8 flex items-center justify-center ${inter.className}`}>
+        <div className="max-w-[480px] w-full bg-white border border-[#E7E0D4] rounded-2xl p-6 text-center shadow-sm">
+          <h2 className={`text-[20px] font-bold text-[#241B2F] ${spaceGrotesk.className}`}>
+            Could not load this trip
+          </h2>
+          <p className="text-[13px] text-[#5C5468] mt-2">
+            This page only shows itinerary data returned from the database.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 px-4 py-2 rounded-lg bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -795,6 +783,9 @@ export default function ItineraryBuilderPage() {
                   onChange={(e) => setNewStopCityId(e.target.value)}
                   className="w-full bg-[#F1EDE6] border border-transparent rounded-xl px-4 py-2.5 text-[14px] text-[#241B2F] outline-none hover:border-[#D6CCBC] focus:border-[#714B67] focus:bg-white"
                 >
+                  {availableCities.length === 0 && (
+                    <option value="">No cities available from database</option>
+                  )}
                   {availableCities.map((city) => (
                     <option key={city.id} value={city.id}>
                       {city.name}, {city.country}
@@ -840,7 +831,7 @@ export default function ItineraryBuilderPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={isAddingStop}
+                  disabled={isAddingStop || availableCities.length === 0}
                   onClick={() => handleAddStop()}
                   className="px-5 py-2 text-[13px] font-bold bg-[#714B67] hover:bg-[#4E3347] text-white rounded-xl transition-all shadow-sm disabled:opacity-50"
                 >
@@ -906,6 +897,11 @@ export default function ItineraryBuilderPage() {
                   <label className="block text-[12px] font-bold text-[#241B2F] uppercase tracking-wider mb-1.5">
                     Select from Curated Experiences
                   </label>
+                  {availableActivities.length === 0 ? (
+                    <div className="p-3 rounded-xl border border-dashed border-[#D6CCBC] bg-[#FAF8F5] text-[12px] text-[#5C5468]">
+                      No activities available for this city in the database.
+                    </div>
+                  ) : (
                   <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
                     {availableActivities.map((act) => {
                       const isPicked = pickedActivityId === act.id;
@@ -928,6 +924,7 @@ export default function ItineraryBuilderPage() {
                       );
                     })}
                   </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -1008,7 +1005,7 @@ export default function ItineraryBuilderPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={isAddingActivity}
+                  disabled={isAddingActivity || (activityMode === "catalog" && availableActivities.length === 0)}
                   onClick={() => handleAddActivity()}
                   className="px-5 py-2 text-[13px] font-bold bg-[#714B67] hover:bg-[#4E3347] text-white rounded-xl transition-all shadow-sm disabled:opacity-50"
                 >
