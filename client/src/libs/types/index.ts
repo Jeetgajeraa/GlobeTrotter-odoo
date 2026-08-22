@@ -433,6 +433,68 @@ export interface AdminAllTripsResponse extends BaseResponse {
 }
 
 /* ──────────────────────────────────────────────
+   Budget & Expense Shapes (Screen 9)
+   ────────────────────────────────────────────── */
+export interface CategoryBreakdownItem {
+  category: string;
+  amount: number;
+  count: number;
+  percentage: number;
+}
+export interface DailyExpenseItem {
+  id: string;
+  category: string;
+  amount: number;
+  description?: string | null;
+  cityName?: string | null;
+}
+export interface DailyExpenseGroup {
+  date: string;
+  total: number;
+  items: DailyExpenseItem[];
+}
+export interface StopBudgetBreakdown {
+  stopId: string;
+  cityName: string;
+  country: string;
+  order: number;
+  startDate: string;
+  endDate: string;
+  totalExpenses: number;
+  estimatedActivitiesCost: number;
+}
+export interface ScheduledActivityBudget {
+  stopActivityId: string;
+  activityName: string;
+  cityName: string;
+  scheduledDate: string;
+  cost: number;
+}
+export interface TripBudgetSummaryData {
+  tripId: string;
+  tripName: string;
+  durationDays: number;
+  totalLoggedExpense: number;
+  totalEstimatedActivitiesCost: number;
+  averageCostPerDay: number;
+  categoryBreakdown: CategoryBreakdownItem[];
+  dailyExpenses: DailyExpenseGroup[];
+  stopBreakdown: StopBudgetBreakdown[];
+  scheduledActivitiesList: ScheduledActivityBudget[];
+}
+export interface TripBudgetSummaryResponse extends BaseResponse {
+  data: TripBudgetSummaryData | null;
+}
+export interface AddExpensePayload {
+  stopId?: string;
+  category: string;
+  amount: number;
+  date: string;
+  description?: string;
+}
+
+
+/* ──────────────────────────────────────────────
    Community Post Types
    ────────────────────────────────────────────── */
 export interface CommunityAuthor {

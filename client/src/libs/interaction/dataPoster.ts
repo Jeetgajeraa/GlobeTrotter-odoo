@@ -10,6 +10,7 @@ import {
   StopActivityResponse,
   SingleCommunityPostResponse,
   LikePostResponse,
+  AddExpensePayload,
 } from "../types";
 
 export async function login(credentials: {
@@ -110,6 +111,25 @@ export async function addStopActivity(
   }
 }
 
+/**
+ * POST /api/trips/:tripId/expenses
+ * Adds an expense item to a trip.
+ */
+export async function addTripExpense(
+  tripId: string,
+  payload: AddExpensePayload,
+) {
+  try {
+    const { data } = await apiClient.post(
+      `${BASE_URL}/api/trips/${tripId}/expenses`,
+      payload,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as any;
+  }
+}
 /**
  * POST /api/community/posts
  * Creates a new community post (supports FormData with file upload)

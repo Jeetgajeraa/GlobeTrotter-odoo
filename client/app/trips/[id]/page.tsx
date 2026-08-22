@@ -214,6 +214,12 @@ export default function TripItineraryViewPage() {
                   {isTogglingVis ? "Updating..." : trip.isPublic ? "Make Private" : "Make Public"}
                 </button>
                 <Link
+                  href={`/trips/${trip.id}/budget`}
+                  className="px-4 py-2 bg-white border border-[#E7E0D4] text-[#714B67] font-bold text-xs rounded-xl hover:bg-[#F1E7EE] transition-all flex items-center gap-1.5"
+                >
+                  <span>💰</span> Budget & Costs
+                </Link>
+                <Link
                   href={`/trips/${trip.id}/builder`}
                   className="px-5 py-2 bg-[#714B67] text-white font-bold text-xs rounded-xl hover:bg-[#4E3347] transition-all shadow-sm flex items-center gap-1.5"
                 >

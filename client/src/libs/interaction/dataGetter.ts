@@ -8,6 +8,7 @@ import {
   GetTripsParams, CommunityPostsResponse,
   SingleCommunityPostResponse,
   GetCommunityPostsParams,
+  TripBudgetSummaryResponse,
 } from "../types";
 import {
   GetTripResponse,
@@ -218,6 +219,22 @@ export async function getAdminAllTrips(params: {
   } catch (error: AxiosError | unknown) {
     const err = error as AxiosError;
     return err.response?.data as any;
+  }
+}
+
+/**
+ * GET /api/trips/:tripId/budget
+ * Fetches budget analytics, cost breakdown, daily averages, and expense list (Screen 9).
+ */
+export async function getTripBudgetSummary(tripId: string): Promise<TripBudgetSummaryResponse> {
+  try {
+    const { data } = await apiClient.get<TripBudgetSummaryResponse>(
+      `${BASE_URL}/api/trips/${tripId}/budget`,
+    );
+    return data;
+  } catch (error: AxiosError | unknown) {
+    const err = error as AxiosError;
+    return err.response?.data as TripBudgetSummaryResponse;
   }
 }
 
