@@ -64,3 +64,24 @@ export interface TripSummary {
   isPublic: boolean;
   createdAt: string;
 }
+
+export interface CreateTripPayload {
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  coverPhoto?: string | File | null;
+  isPublic?: boolean;
+  initialCityId?: string;
+}
+
+export interface CreateTripResponse extends BaseResponse {
+  data: TripSummary & {
+      shareSlug?: string | null;
+      _count?: {
+        stops: number;
+        expenses: number;
+      };
+    };
+}
+

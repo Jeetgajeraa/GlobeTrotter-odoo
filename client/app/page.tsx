@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 /* ── Data ─────────────────────────────────────────────────── */
@@ -454,44 +455,46 @@ export default function LandingPage() {
         right: 48,
         zIndex: 40,
       }}>
-        <button
-          id="plan-trip-btn"
-          style={{
-            height: 52,
-            padding: "0 28px",
-            background: "var(--color-mulberry)",
-            color: "#FFFFFF",
-            border: "none",
-            borderRadius: "var(--radius-sm)",
-            fontFamily: "var(--font-body)",
-            fontWeight: 600,
-            fontSize: 15,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            cursor: "pointer",
-            boxShadow: "0 8px 24px rgba(113,75,103,0.35)",
-            transition: "background 150ms, transform 150ms, box-shadow 150ms",
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "var(--color-mulberry-dark)";
-            e.currentTarget.style.transform = "scale(1.02)";
-            e.currentTarget.style.boxShadow = "0 12px 32px rgba(113,75,103,0.45)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = "var(--color-mulberry)";
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(113,75,103,0.35)";
-          }}
-          onMouseDown={e => { e.currentTarget.style.transform = "scale(0.98)"; }}
-          onMouseUp={e =>   { e.currentTarget.style.transform = "scale(1.02)"; }}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <line x1="9" y1="2" x2="9" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="2" y1="9" x2="16" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          Plan a trip
-        </button>
+        <Link href="/trips/new" style={{ textDecoration: "none" }}>
+          <button
+            id="plan-trip-btn"
+            style={{
+              height: 52,
+              padding: "0 28px",
+              background: "var(--color-mulberry)",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              fontSize: 15,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              cursor: "pointer",
+              boxShadow: "0 8px 24px rgba(113,75,103,0.35)",
+              transition: "background 150ms, transform 150ms, box-shadow 150ms",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "var(--color-mulberry-dark)";
+              e.currentTarget.style.transform = "scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 12px 32px rgba(113,75,103,0.45)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "var(--color-mulberry)";
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(113,75,103,0.35)";
+            }}
+            onMouseDown={e => { e.currentTarget.style.transform = "scale(0.98)"; }}
+            onMouseUp={e =>   { e.currentTarget.style.transform = "scale(1.02)"; }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <line x1="9" y1="2" x2="9" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="2" y1="9" x2="16" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Plan a trip
+          </button>
+        </Link>
       </div>
     </div>
   );
