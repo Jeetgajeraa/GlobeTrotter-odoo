@@ -122,7 +122,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       res.status(401).json(createResponse(false, 'Invalid email or password', null));
@@ -177,6 +176,129 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
   } catch (error: any) {
     console.error('Error fetching user profile:', error);
     res.status(500).json(createResponse(false, 'Failed to fetch user profile', null));
+  }
+};
+
+//update profile
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      res.status(401).json(createResponse(false, 'Unauthorized access', null));
+      return;
+    }
+
+    const userId = req.user.userId;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!existingUser) {
+      res.status(404).json(createResponse(false, 'User not found', null));
+      return;
+    }
+
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phoneNumber,
+      city,
+      country,
+      bio,
+      profilePhoto
+    } = req.body;
+
+    const updateData: any = {};
+
+    if (firstName !== undefined && firstName !== null) updateData.firstName = String(firstName).trim();
+    if (lastName !== undefined && lastName !== null) updateData.lastName = String(lastName).trim();
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber ? String(phoneNumber).trim() : null;
+    if (city !== undefined) updateData.city = city ? String(city).trim() : null;
+    if (country !== undefined) updateData.country = country ? String(country).trim() : null;
+    if (bio !== undefined) updateData.bio = bio ? String(bio).trim() : null;
+
+    // Handle profile photo upload (Cloudinary file upload or string URL)
+    if (req.file && (req.file as any).path) {
+      updateData.profilePhoto = (req.file as any).path;
+    } else if (profilePhoto !== undefined) {
+      updateData.profilePhoto = profilePhoto ? String(profilePhoto).trim() : null;
+    }
+
+    // Optional email update with uniqueness check
+    if (email) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        res.status(400).json(createResponse(false, 'Please provide a valid email address', null));
+        return;
+      }
+
+      if (normalizedEmail !== existingUser.email) {
+        const emailTaken = await prisma.user.findUnique({
+          where: { email: normalizedEmail }
+        });
+        if (emailTaken) {
+          res.status(409).json(createResponse(false, 'An account with this email address already exists', null));
+          return;
+        }
+        updateData.email = normalizedEmail;
+      }
+    }
+
+    // Optional password update
+    if (password) {
+      if (String(password).length < 6) {
+        res.status(400).json(createResponse(false, 'Password must be at least 6 characters long', null));
+        return;
+      }
+      updateData.passwordHash = await bcrypt.hash(String(password), 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    });
+
+    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
+
+    res.status(200).json(createResponse(true, 'User profile updated successfully', {
+      user: userWithoutPassword
+    }));
+  } catch (error: any) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json(createResponse(false, 'Failed to update user profile. ' + (error.message || ''), null));
+  }
+};
+
+//delete profile
+export const deleteProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      res.status(401).json(createResponse(false, 'Unauthorized access', null));
+      return;
+    }
+
+    const userId = req.user.userId;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!existingUser) {
+      res.status(404).json(createResponse(false, 'User not found', null));
+      return;
+    }
+
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    res.status(200).json(createResponse(true, 'User account and profile deleted successfully', null));
+  } catch (error: any) {
+    console.error('Error deleting user profile:', error);
+    res.status(500).json(createResponse(false, 'Failed to delete user account. ' + (error.message || ''), null));
   }
 };
 
