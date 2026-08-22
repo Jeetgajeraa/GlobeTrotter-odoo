@@ -6,8 +6,8 @@ import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
-import cookies from "js-cookie";
 
+import { AppNav } from "@/src/components/AppNav";
 import { getMe } from "@/src/libs/interaction/dataGetter";
 import { patchMe } from "@/src/libs/interaction/dataPatcher";
 import { useToast } from "@/src/hooks/useToast";
@@ -189,54 +189,13 @@ function ProfileContent({
     setEditing(false);
   }
 
-  function handleLogout() {
-    cookies.remove("token");
-    router.push("/auth");
-  }
-
   const initials =
     (user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "");
 
   return (
     <div className={`min-h-screen bg-[#FAF8F5] ${inter.className}`}>
 
-      {/* ── Nav ─────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[#FAF8F5] border-b border-[#E7E0D4]">
-        <div className="max-w-[1120px] mx-auto px-12 h-[60px] flex items-center justify-between">
-          {/* Logo */}
-          <button
-            id="nav-logo"
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2.5 cursor-pointer outline-none
-              focus-visible:shadow-[0_0_0_3px_#F1E7EE] rounded"
-          >
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <circle cx="7"  cy="14" r="5" fill="#714B67" />
-              <line x1="12" y1="14" x2="16" y2="14" stroke="#E0663D"
-                strokeWidth="2" strokeDasharray="2 2"/>
-              <circle cx="21" cy="14" r="5" stroke="#9A93A6"
-                strokeWidth="2" fill="none"/>
-            </svg>
-            <span className={`text-[20px] font-bold tracking-tight text-[#241B2F] ${spaceGrotesk.className}`}>
-              Globe<span className="text-[#714B67]">Trotter</span>
-            </span>
-          </button>
-
-          {/* Right nav */}
-          <div className="flex items-center gap-3">
-            <button
-              id="nav-logout"
-              onClick={handleLogout}
-              className="text-[13px] font-medium text-[#5C5468] px-3 py-1.5
-                rounded-lg border border-[#E7E0D4] hover:border-[#D6CCBC]
-                hover:text-[#241B2F] transition-colors duration-150 cursor-pointer
-                outline-none focus-visible:shadow-[0_0_0_3px_#F1E7EE]"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppNav />
 
       {/* ── Main ─────────────────────────────── */}
       <main className="max-w-[1120px] mx-auto px-12 py-8"

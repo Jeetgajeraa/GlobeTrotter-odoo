@@ -302,6 +302,60 @@ export const deleteProfile = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+//change password
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      res.status(401).json(createResponse(false, 'Unauthorized access', null));
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json(createResponse(false, 'Current password and new password are required', null));
+      return;
+    }
+
+    if (String(newPassword).length < 6) {
+      res.status(400).json(createResponse(false, 'New password must be at least 6 characters long', null));
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      res.status(400).json(createResponse(false, 'New password must be different from the current password', null));
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
+
+    if (!user) {
+      res.status(404).json(createResponse(false, 'User not found', null));
+      return;
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(String(currentPassword), user.passwordHash);
+    if (!isCurrentPasswordValid) {
+      res.status(401).json(createResponse(false, 'Current password is incorrect', null));
+      return;
+    }
+
+    const newPasswordHash = await bcrypt.hash(String(newPassword), 10);
+
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { passwordHash: newPasswordHash }
+    });
+
+    res.status(200).json(createResponse(true, 'Password changed successfully', null));
+  } catch (error: any) {
+    console.error('Error changing password:', error);
+    res.status(500).json(createResponse(false, 'Failed to change password. ' + (error.message || ''), null));
+  }
+};
+
 //logout
 export const logout = async (_req: Request, res: Response): Promise<void> => {
   res.status(200).json(createResponse(true, 'Logout successful', null));
