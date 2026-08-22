@@ -8,10 +8,10 @@ import { useForm } from "react-hook-form";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 
 import { AppNav } from "@/src/components/AppNav";
-import { getMe } from "@/src/libs/interaction/dataGetter";
+import { getMe, getUserTrips } from "@/src/libs/interaction/dataGetter";
 import { patchMe } from "@/src/libs/interaction/dataPatcher";
 import { useToast } from "@/src/hooks/useToast";
-import { User, UpdateProfilePayload } from "@/src/libs/types";
+import { User, UpdateProfilePayload, Trip } from "@/src/libs/types";
 
 /* ── Fonts ─────────────────────────────────── */
 const spaceGrotesk = Space_Grotesk({
@@ -52,18 +52,15 @@ type ProfileFormSchema = {
   bio: string;
 };
 
-/* ── Placeholder trip data ─────────────────── */
-const preplannedTrips = [
-  { id: "pt1", name: "Japan Cherry Blossom",  dates: "Mar 2026", cover: "/dest_tokyo.png",     status: "Planning"  },
-  { id: "pt2", name: "Mediterranean Cruise",  dates: "Jul 2026", cover: "/dest_santorini.png", status: "Upcoming"  },
-  { id: "pt3", name: "NYC Long Weekend",       dates: "Oct 2026", cover: "/dest_newyork.png",   status: "Draft"     },
-];
+function formatTripDates(startDate: string, endDate: string) {
+  const start = new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const end = new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return `${start} - ${end}`;
+}
 
-const previousTrips = [
-  { id: "prev1", name: "Grand Europe Tour",   dates: "Jun–Jul 2025", cover: "/trip_europe.png",   budget: "$4,240" },
-  { id: "prev2", name: "Southeast Asia Loop", dates: "Jan–Feb 2025", cover: "/trip_asia.png",     budget: "$2,180" },
-  { id: "prev3", name: "Andes & Patagonia",   dates: "Nov 2024",     cover: "/trip_americas.png", budget: "$3,670" },
-];
+function getTripCover(trip: Trip) {
+  return trip.coverPhoto || trip.stops?.[0]?.city?.imageUrl || "/banner.png";
+}
 
 /* ══════════════════════════════════════════
    Page component
@@ -120,6 +117,17 @@ function ProfileContent({
   const [photoPreview, setPhotoPreview] = useState<string | null>(user.profilePhoto);
   const [photoFile, setPhotoFile]       = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: groupedTripsRes } = useQuery({
+    queryKey: ["trips", "grouped", "profile"],
+    queryFn: () => getUserTrips({ groupByStatus: true }),
+    retry: false,
+  });
+
+  const upcomingTrips = groupedTripsRes?.data?.upcoming ?? [];
+  const ongoingTrips = groupedTripsRes?.data?.ongoing ?? [];
+  const completedTrips = groupedTripsRes?.data?.completed ?? [];
+  const preplannedTrips = [...ongoingTrips, ...upcomingTrips];
 
   const {
     register,
@@ -487,23 +495,27 @@ function ProfileContent({
             ════════════════════════════════════ */}
         <section id="preplanned-trips" className="mb-8">
           <SectionHeader title="Preplanned Trips" />
+          {preplannedTrips.length === 0 ? (
+            <div className="bg-white border border-[#E7E0D4] rounded-[14px] p-5 text-[13px] text-[#5C5468]">
+              No upcoming or ongoing trips found in your account.
+            </div>
+          ) : (
           <div className="grid grid-cols-3 gap-5">
             {preplannedTrips.map((trip) => (
               <TripCard
                 key={trip.id}
                 id={trip.id}
                 name={trip.name}
-                dates={trip.dates}
-                cover={trip.cover}
-                badge={trip.status}
+                dates={formatTripDates(trip.startDate, trip.endDate)}
+                cover={getTripCover(trip)}
+                badge={trip.status === "ongoing" ? "Ongoing" : "Upcoming"}
                 badgeColor={
-                  trip.status === "Planning" ? "mulberry"
-                  : trip.status === "Upcoming" ? "horizon"
-                  : "sun"
+                  trip.status === "ongoing" ? "horizon" : "mulberry"
                 }
               />
             ))}
           </div>
+          )}
         </section>
 
         {/* ════════════════════════════════════
@@ -511,20 +523,26 @@ function ProfileContent({
             ════════════════════════════════════ */}
         <section id="previous-trips" className="mb-8">
           <SectionHeader title="Previous Trips" />
+          {completedTrips.length === 0 ? (
+            <div className="bg-white border border-[#E7E0D4] rounded-[14px] p-5 text-[13px] text-[#5C5468]">
+              No completed trips found in your account.
+            </div>
+          ) : (
           <div className="grid grid-cols-3 gap-5">
-            {previousTrips.map((trip) => (
+            {completedTrips.map((trip) => (
               <TripCard
                 key={trip.id}
                 id={trip.id}
                 name={trip.name}
-                dates={trip.dates}
-                cover={trip.cover}
+                dates={formatTripDates(trip.startDate, trip.endDate)}
+                cover={getTripCover(trip)}
                 badge="Completed"
                 badgeColor="horizon"
-                extraMono={trip.budget}
+                extraMono={trip.totalExpense > 0 ? `$${trip.totalExpense}` : undefined}
               />
             ))}
           </div>
+          )}
         </section>
 
       </main>

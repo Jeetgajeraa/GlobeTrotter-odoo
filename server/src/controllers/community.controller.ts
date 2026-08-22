@@ -85,6 +85,9 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
     const {
       search,
       tripId,
+      userId,
+      hasImage,
+      hasTrip,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       page = '1',
@@ -102,14 +105,28 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
       where.OR = [
         { title: { contains: searchStr, mode: 'insensitive' } },
         { content: { contains: searchStr, mode: 'insensitive' } },
+        { user: { firstName: { contains: searchStr, mode: 'insensitive' } } },
+        { user: { lastName: { contains: searchStr, mode: 'insensitive' } } },
       ];
+    }
+
+    if (userId) {
+      where.userId = String(userId);
     }
 
     if (tripId) {
       where.tripId = String(tripId);
     }
 
-    const validSortFields = ['createdAt', 'likeCount', 'title'];
+    if (hasImage === 'true') {
+      where.imageUrl = { not: null };
+    }
+
+    if (hasTrip === 'true') {
+      where.tripId = { not: null };
+    }
+
+    const validSortFields = ['createdAt', 'updatedAt', 'likeCount', 'title'];
     const sortField = validSortFields.includes(String(sortBy)) ? String(sortBy) : 'createdAt';
     const orderDirection = String(sortOrder).toLowerCase() === 'asc' ? 'asc' : 'desc';
 

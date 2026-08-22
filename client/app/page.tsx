@@ -2,47 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppNav } from "@/src/components/AppNav";
+import { getCities, getUserTrips } from "@/src/libs/interaction/dataGetter";
+import { City, Trip } from "@/src/libs/types";
 
-/* ── Data ─────────────────────────────────────────────────── */
-const topRegions = [
-  { id: "paris",     name: "Paris",     country: "France",      img: "/dest_paris.png",     cost: "mid",  badge: "€€€" },
-  { id: "bali",      name: "Bali",      country: "Indonesia",   img: "/dest_bali.png",      cost: "low",  badge: "€€"  },
-  { id: "tokyo",     name: "Tokyo",     country: "Japan",       img: "/dest_tokyo.png",     cost: "mid",  badge: "€€€" },
-  { id: "santorini", name: "Santorini", country: "Greece",      img: "/dest_santorini.png", cost: "high", badge: "€€€€"},
-  { id: "newyork",   name: "New York",  country: "USA",         img: "/dest_newyork.png",   cost: "high", badge: "€€€€"},
-];
-
-const previousTrips = [
-  {
-    id: "europe",
-    name: "Grand Europe Tour",
-    img: "/trip_europe.png",
-    dates: "12 Jun – 04 Jul 2025",
-    stops: 6,
-    status: "Completed",
-    budget: "$4,240",
-  },
-  {
-    id: "asia",
-    name: "Southeast Asia Loop",
-    img: "/trip_asia.png",
-    dates: "18 Jan – 09 Feb 2025",
-    stops: 5,
-    status: "Completed",
-    budget: "$2,180",
-  },
-  {
-    id: "americas",
-    name: "Andes & Patagonia",
-    img: "/trip_americas.png",
-    dates: "03 Nov – 28 Nov 2024",
-    stops: 4,
-    status: "Completed",
-    budget: "$3,670",
-  },
-];
+type RegionCardData = {
+  id: string;
+  name: string;
+  country: string;
+  img: string;
+  cost: "low" | "mid" | "high";
+  badge: string;
+};
 
 /* ── Helpers ──────────────────────────────────────────────── */
 const costColor: Record<string, string> = {
@@ -50,6 +23,31 @@ const costColor: Record<string, string> = {
   mid:  "var(--color-sun)",
   high: "var(--color-danger)",
 };
+
+function getCostMeta(costIndex: number) {
+  if (costIndex <= 2) return { cost: "low" as const, badge: "€€" };
+  if (costIndex >= 3.5) return { cost: "high" as const, badge: "€€€€" };
+  return { cost: "mid" as const, badge: "€€€" };
+}
+
+function formatTripDates(startDate: string, endDate: string) {
+  const start = new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const end = new Date(endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return `${start} - ${end}`;
+}
+
+function getTripCover(trip: Trip) {
+  return trip.coverPhoto || trip.stops?.[0]?.city?.imageUrl || "/banner.png";
+}
+
+function extractCities(resData: unknown): City[] {
+  if (!resData) return [];
+  if (Array.isArray(resData)) return resData as City[];
+  if (typeof resData === "object" && Array.isArray((resData as { cities?: City[] }).cities)) {
+    return (resData as { cities: City[] }).cities;
+  }
+  return [];
+}
 
 export default function LandingPage() {
   const [search, setSearch] = useState("");
@@ -59,6 +57,48 @@ export default function LandingPage() {
   const [activeGroup,  setActiveGroup]  = useState("Region");
   const [activeSort,   setActiveSort]   = useState("Popular");
   const [activeFilter, setActiveFilter] = useState<string[]>([]);
+
+  const { data: citiesRes } = useQuery({
+    queryKey: ["landingCities", search],
+    queryFn: () => getCities(search.trim() || undefined),
+  });
+
+  const { data: groupedTripsRes } = useQuery({
+    queryKey: ["landingTrips", "grouped"],
+    queryFn: () => getUserTrips({ groupByStatus: true }),
+    retry: false,
+  });
+
+  const topRegions = useMemo<RegionCardData[]>(() => {
+    const cities = citiesRes?.success ? extractCities(citiesRes.data) : [];
+    const cityList = [...cities].slice(0, 10).map((city) => {
+      const { cost, badge } = getCostMeta(city.costIndex);
+      return {
+        id: city.id,
+        name: city.name,
+        country: city.country,
+        img: city.imageUrl || "/banner.png",
+        cost,
+        badge,
+      };
+    });
+
+    if (activeSort === "A-Z") {
+      cityList.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    if (activeSort.toLowerCase().includes("low") && activeSort.toLowerCase().includes("high") && activeSort.toLowerCase().indexOf("low") < activeSort.toLowerCase().indexOf("high")) {
+      cityList.sort((a, b) => (a.cost === b.cost ? 0 : a.cost === "low" ? -1 : a.cost === "mid" && b.cost === "high" ? -1 : 1));
+    }
+    if (activeSort.toLowerCase().includes("high") && activeSort.toLowerCase().includes("low") && activeSort.toLowerCase().indexOf("high") < activeSort.toLowerCase().indexOf("low")) {
+      cityList.sort((a, b) => (a.cost === b.cost ? 0 : a.cost === "high" ? -1 : a.cost === "mid" && b.cost === "low" ? -1 : 1));
+    }
+
+    return cityList.slice(0, 5);
+  }, [citiesRes, activeSort]);
+
+  const previousTrips = useMemo(() => {
+    return groupedTripsRes?.data?.completed ?? [];
+  }, [groupedTripsRes]);
 
   const toggleFilter = (f: string) =>
     setActiveFilter(prev =>
@@ -340,29 +380,57 @@ export default function LandingPage() {
         {/* ── Top Regional Selections ───────────────────────── */}
         <section id="top-regional" style={{ marginBottom: 40 }}>
           <SectionHeader title="Top Regional Selections" />
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
-            gap: 16,
-          }}>
-            {topRegions.map(r => (
-              <RegionCard key={r.id} region={r} />
-            ))}
-          </div>
+          {topRegions.length === 0 ? (
+            <div style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-line)",
+              borderRadius: "var(--radius-md)",
+              padding: 16,
+              color: "var(--color-ink-soft)",
+              fontFamily: "var(--font-body)",
+              fontSize: 14,
+            }}>
+              No destination data found in the database.
+            </div>
+          ) : (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 16,
+            }}>
+              {topRegions.map(r => (
+                <RegionCard key={r.id} region={r} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* ── Previous Trips ────────────────────────────────── */}
         <section id="previous-trips" style={{ marginBottom: 48 }}>
           <SectionHeader title="Previous Trips" />
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-          }}>
-            {previousTrips.map(trip => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
-          </div>
+          {previousTrips.length === 0 ? (
+            <div style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-line)",
+              borderRadius: "var(--radius-md)",
+              padding: 16,
+              color: "var(--color-ink-soft)",
+              fontFamily: "var(--font-body)",
+              fontSize: 14,
+            }}>
+              No completed trips found in the database.
+            </div>
+          ) : (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 20,
+            }}>
+              {previousTrips.map(trip => (
+                <TripCard key={trip.id} trip={trip} />
+              ))}
+            </div>
+          )}
         </section>
 
       </main>
@@ -447,7 +515,7 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-function RegionCard({ region }: { region: typeof topRegions[0] }) {
+function RegionCard({ region }: { region: RegionCardData }) {
   const [hovered, setHovered] = useState(false);
   const color = costColor[region.cost] ?? "var(--color-ink-faint)";
   return (
@@ -512,8 +580,11 @@ function RegionCard({ region }: { region: typeof topRegions[0] }) {
   );
 }
 
-function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
+function TripCard({ trip }: { trip: Trip }) {
   const [hovered, setHovered] = useState(false);
+  const tripStatus = trip.status === "completed" ? "Completed" : trip.status === "ongoing" ? "Ongoing" : "Upcoming";
+  const stopsCount = trip.stops?.length ?? 0;
+  const budget = trip.totalExpense > 0 ? `$${trip.totalExpense}` : "--";
   return (
     <article
       id={`trip-card-${trip.id}`}
@@ -534,7 +605,7 @@ function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
       {/* Cover image */}
       <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
         <Image
-          src={trip.img}
+          src={getTripCover(trip)}
           alt={trip.name}
           fill
           sizes="(max-width: 1120px) 35vw, 350px"
@@ -563,7 +634,7 @@ function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
           padding: "3px 10px",
           borderRadius: "99px",
           backdropFilter: "blur(4px)",
-        }}>{trip.status}</span>
+        }}>{tripStatus}</span>
         {/* Trip name on image */}
         <div style={{ position: "absolute", bottom: 14, left: 14, right: 14 }}>
           <h3 style={{
@@ -585,7 +656,7 @@ function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
             fontSize: 13,
             color: "var(--color-ink-soft)",
             marginBottom: 4,
-          }}>{trip.dates}</p>
+          }}>{formatTripDates(trip.startDate, trip.endDate)}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* mini route dots */}
             <span style={{
@@ -597,7 +668,7 @@ function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
               <svg width="10" height="10" viewBox="0 0 10 10">
                 <circle cx="5" cy="5" r="4" fill="var(--color-mulberry)"/>
               </svg>
-              {trip.stops} stops
+              {stopsCount} stops
             </span>
           </div>
         </div>
@@ -646,7 +717,7 @@ function TripCard({ trip }: { trip: typeof previousTrips[0] }) {
             fontWeight: 500,
             fontSize: 18,
             color: "var(--color-ink)",
-          }}>{trip.budget}</p>
+          }}>{budget}</p>
         </div>
       </div>
 
