@@ -11,16 +11,16 @@ type Mode = "login" | "register";
 
 /* ── Shared class strings ── */
 const inputCls =
-  "w-full bg-[#F1EDE6] border border-transparent rounded-lg px-3.5 py-[11px] " +
-  "text-[14px] text-[#241B2F] outline-none " +
+  "w-full bg-[#F1EDE6] border border-transparent rounded-lg px-3 py-2 " +
+  "text-[13px] text-[#241B2F] outline-none " +
   "placeholder:text-[#9A93A6] " +
   "transition-[border-color,box-shadow,background] duration-150 " +
   "hover:border-[#D6CCBC] " +
   "focus:border-[#714B67] focus:shadow-[0_0_0_3px_#F1E7EE] focus:bg-white";
 
 const btnCls =
-  "w-full mt-2 bg-[#714B67] hover:bg-[#4E3347] active:scale-[0.98] " +
-  "text-white font-semibold text-[15px] rounded-lg py-3.5 cursor-pointer outline-none " +
+  "w-full mt-1.5 bg-[#714B67] hover:bg-[#4E3347] active:scale-[0.98] " +
+  "text-white font-semibold text-[14px] rounded-lg py-2.5 cursor-pointer outline-none " +
   "transition-all duration-150 " +
   "hover:shadow-[0_4px_12px_rgba(113,75,103,0.28)] " +
   "focus-visible:shadow-[0_0_0_3px_#F1E7EE]";
@@ -31,10 +31,10 @@ export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
 
   return (
-    <div className={`min-h-screen flex bg-[#FAF8F5] ${inter.className}`}>
+    <div className={`h-screen flex overflow-hidden bg-[#FAF8F5] ${inter.className}`}>
 
       {/* ── Left panel ── */}
-      <aside className="hidden lg:flex flex-col justify-between flex-none w-[42%] bg-[#714B67] p-12 relative overflow-hidden">
+      <aside className="hidden lg:flex flex-col justify-between flex-none w-[42%] h-screen bg-[#714B67] p-12 relative overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute w-[480px] h-[480px] rounded-full bg-white/5 -top-[120px] -left-[120px] pointer-events-none" />
         <div className="absolute w-[320px] h-[320px] rounded-full bg-white/[0.04] -bottom-20 -right-20 pointer-events-none" />
@@ -85,25 +85,23 @@ export default function AuthPage() {
       </aside>
 
       {/* ── Right panel ── */}
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div
-          className="w-full max-w-[480px] bg-white rounded-[20px] border border-[#E7E0D4] p-10
+      <main className="flex-1 h-screen flex items-center justify-center px-6 py-4">
+        <div className="w-full max-w-[480px] bg-white rounded-[20px] border border-[#E7E0D4] px-8 py-6
             shadow-[0_1px_2px_rgba(36,27,47,0.04),0_8px_24px_rgba(36,27,47,0.06)]
-            animate-[cardIn_0.3s_ease-out]"
-        >
+            animate-[cardIn_0.3s_ease-out]">
 
           {/* Avatar */}
-          <div className="flex justify-center mb-7">
+          <div className="flex justify-center mb-4">
             <div
-              className="w-20 h-20 rounded-full bg-[#F1E7EE] border-2 border-[#E7E0D4]
+              className="w-14 h-14 rounded-full bg-[#F1E7EE] border-2 border-[#E7E0D4]
                 relative overflow-hidden flex items-center justify-center cursor-pointer
                 transition-all duration-150 group
-                hover:border-[#714B67] hover:shadow-[0_0_0_4px_#F1E7EE] hover:scale-[1.04]"
+                hover:border-[#714B67] hover:shadow-[0_0_0_3px_#F1E7EE] hover:scale-[1.04]"
               role="button"
               tabIndex={0}
               aria-label={mode === "register" ? "Upload profile photo" : "User avatar"}
             >
-              <span className="text-3xl select-none">{mode === "login" ? "🧳" : "✈️"}</span>
+              <span className="text-2xl select-none">{mode === "login" ? "🧳" : "✈️"}</span>
               {mode === "register" && (
                 <div className="absolute inset-0 bg-[#714B67]/80 flex items-center justify-center
                   opacity-0 group-hover:opacity-100 transition-opacity duration-150
@@ -115,7 +113,7 @@ export default function AuthPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-[#E7E0D4] mb-7" role="tablist">
+          <div className="flex border-b border-[#E7E0D4] mb-4" role="tablist">
             {(["login", "register"] as Mode[]).map((m) => (
               <button
                 key={m}
@@ -125,7 +123,7 @@ export default function AuthPage() {
                 aria-controls={`panel-${m}`}
                 onClick={() => setMode(m)}
                 className={[
-                  "flex-1 py-3 text-[15px] relative outline-none cursor-pointer transition-colors duration-150",
+                  "flex-1 py-2 text-[14px] relative outline-none cursor-pointer transition-colors duration-150",
                   "after:content-[''] after:absolute after:bottom-[-1px] after:left-0 after:w-full after:h-0.5",
                   "after:bg-[#714B67] after:transition-transform after:duration-200 after:ease-out",
                   "focus-visible:shadow-[0_0_0_3px_#F1E7EE]",
@@ -144,14 +142,14 @@ export default function AuthPage() {
           {mode === "login" && (
             <div id="panel-login" role="tabpanel" aria-labelledby="tab-login"
               className="animate-[panelIn_0.22s_ease-out]">
-              <h2 className={`text-[22px] font-semibold text-[#241B2F] tracking-tight mb-1 ${spaceGrotesk.className}`}>
+              <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk.className}`}>
                 Welcome back
               </h2>
-              <p className="text-[13px] text-[#5C5468] mb-6 leading-relaxed">
+              <p className="text-[12px] text-[#5C5468] mb-4 leading-relaxed">
                 Sign in to continue planning your trips.
               </p>
 
-              <div className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-2.5">
                 <Field label="Username" htmlFor="login-username">
                   <input
                     id="login-username" type="text"
@@ -178,7 +176,7 @@ export default function AuthPage() {
 
               <Divider />
 
-              <p className="text-center text-[13px] text-[#5C5468] mt-3.5">
+              <p className="text-center text-[12px] text-[#5C5468] mt-2">
                 New here?{" "}
                 <button type="button" onClick={() => setMode("register")}
                   className="text-[#714B67] font-semibold underline underline-offset-2
@@ -193,14 +191,14 @@ export default function AuthPage() {
           {mode === "register" && (
             <div id="panel-register" role="tabpanel" aria-labelledby="tab-register"
               className="animate-[panelIn_0.22s_ease-out]">
-              <h2 className={`text-[22px] font-semibold text-[#241B2F] tracking-tight mb-1 ${spaceGrotesk.className}`}>
+              <h2 className={`text-[20px] font-semibold text-[#241B2F] tracking-tight mb-0.5 ${spaceGrotesk.className}`}>
                 Join GlobeTrotter
               </h2>
-              <p className="text-[13px] text-[#5C5468] mb-6 leading-relaxed">
+              <p className="text-[12px] text-[#5C5468] mb-3 leading-relaxed">
                 Create your account and start building your first route.
               </p>
 
-              <div className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-2">
                 {/* First + Last */}
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="First name" htmlFor="reg-firstname">
@@ -242,7 +240,7 @@ export default function AuthPage() {
                   <textarea
                     id="reg-bio"
                     placeholder="Tell us about your travel style, favourite destinations…"
-                    className={`${inputCls} resize-y min-h-[80px]`}
+                    className={`${inputCls} resize-none min-h-[52px]`}
                   />
                 </Field>
               </div>
@@ -251,7 +249,7 @@ export default function AuthPage() {
                 Register — let&apos;s go
               </button>
 
-              <p className="text-center text-[13px] text-[#5C5468] mt-3.5">
+              <p className="text-center text-[12px] text-[#5C5468] mt-2">
                 Already have an account?{" "}
                 <button type="button" onClick={() => setMode("login")}
                   className="text-[#714B67] font-semibold underline underline-offset-2
@@ -277,7 +275,7 @@ export default function AuthPage() {
 
 function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       <label htmlFor={htmlFor} className="text-[11px] font-semibold text-[#5C5468] uppercase tracking-[0.4px]">
         {label}
       </label>
@@ -288,7 +286,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 
 function Divider() {
   return (
-    <div className="flex items-center gap-3 my-5">
+    <div className="flex items-center gap-3 my-3">
       <div className="flex-1 h-px bg-[#E7E0D4]" />
       <span className="text-[12px] font-medium text-[#9A93A6]">or</span>
       <div className="flex-1 h-px bg-[#E7E0D4]" />
