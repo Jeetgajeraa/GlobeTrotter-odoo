@@ -83,6 +83,14 @@ export const getUserCalendar = async (req: Request, res: Response): Promise<void
             city: {
               select: { id: true, name: true, country: true, imageUrl: true },
             },
+            stopActivities: {
+              orderBy: [{ scheduledDate: 'asc' }, { order: 'asc' }],
+              include: {
+                activity: {
+                  select: { id: true, name: true, category: true, cost: true },
+                },
+              },
+            },
             _count: { select: { stopActivities: true } },
           },
         },
@@ -103,6 +111,17 @@ export const getUserCalendar = async (req: Request, res: Response): Promise<void
         endDate: s.endDate,
       }));
 
+      const activities = trip.stops.flatMap((s) =>
+        s.stopActivities.map((sa) => ({
+          id: sa.id,
+          name: sa.activity.name,
+          category: sa.activity.category,
+          scheduledDate: sa.scheduledDate,
+          startTime: sa.startTime,
+          cost: sa.costOverride !== null ? sa.costOverride : sa.activity.cost,
+        }))
+      );
+
       return {
         id: trip.id,
         name: trip.name,
@@ -116,6 +135,7 @@ export const getUserCalendar = async (req: Request, res: Response): Promise<void
         totalExpense,
         stopsCount: trip.stops.length,
         cities,
+        activities,
       };
     });
 

@@ -12,10 +12,13 @@ import {
   Eye,
   X,
   Compass,
+  Clock,
+  Sparkles,
+  DollarSign,
 } from "lucide-react";
 
 import { AppNav } from "@/src/components/AppNav";
-import { getUserCalendar, getMe } from "@/src/libs/interaction/dataGetter";
+import { getUserCalendar, getMe, getTripTimeline } from "@/src/libs/interaction/dataGetter";
 import { useToast } from "@/src/hooks/useToast";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"] });
@@ -31,6 +34,15 @@ interface CalendarCity {
   endDate: string;
 }
 
+interface CalendarActivity {
+  id: string;
+  name: string;
+  category: string;
+  scheduledDate: string;
+  startTime: string | null;
+  cost: number;
+}
+
 interface CalendarEvent {
   id: string;
   name: string;
@@ -44,6 +56,7 @@ interface CalendarEvent {
   totalExpense: number;
   stopsCount: number;
   cities: CalendarCity[];
+  activities: CalendarActivity[];
 }
 
 /* ── Color palette for trip event bars ── */
@@ -86,6 +99,12 @@ export default function CalendarViewPage() {
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth()); // 0-indexed
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [panelTab, setPanelTab] = useState<"overview" | "activities">("overview");
+
+  // Reset side panel tab on trip change
+  useEffect(() => {
+    setPanelTab("overview");
+  }, [selectedTripId]);
 
   // Auth check
   const { data: userData, isLoading: isUserLoading } = useQuery({
@@ -109,22 +128,34 @@ export default function CalendarViewPage() {
     enabled: !!currentUser,
   });
 
+  // Fetch detailed timeline for selected trip
+  const { data: timelineRes, isLoading: isTimelineLoading } = useQuery({
+    queryKey: ["tripTimeline", selectedTripId],
+    queryFn: () => getTripTimeline(selectedTripId!),
+    enabled: !!selectedTripId,
+  });
+
   const events: CalendarEvent[] = calendarRes?.data?.events || [];
+  const timelineData = timelineRes?.data;
 
   /* ── Navigate months ── */
   const goToPrevMonth = useCallback(() => {
-    setViewMonth((prev) => {
-      if (prev === 0) { setViewYear((y) => y - 1); return 11; }
-      return prev - 1;
-    });
-  }, []);
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  }, [viewMonth]);
 
   const goToNextMonth = useCallback(() => {
-    setViewMonth((prev) => {
-      if (prev === 11) { setViewYear((y) => y + 1); return 0; }
-      return prev + 1;
-    });
-  }, []);
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  }, [viewMonth]);
 
   const goToToday = useCallback(() => {
     setViewYear(now.getFullYear());
@@ -271,10 +302,23 @@ export default function CalendarViewPage() {
                 const isToday = isSameDay(cellDate, now);
                 const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
 
+                // Gather all activities scheduled on this specific date key across all active cellEvents
+                const dayActivities = cellEvents.flatMap((evt) =>
+                  (evt.activities || [])
+                    .filter((act) => {
+                      const actDateKey = act.scheduledDate.split("T")[0];
+                      return actDateKey === dateKey;
+                    })
+                    .map((act) => ({
+                      ...act,
+                      tripId: evt.id,
+                    }))
+                );
+
                 return (
                   <div
                     key={dayNum}
-                    className={`min-h-[110px] border-b border-r border-[#E7E0D4] p-1.5 flex flex-col relative transition-colors ${
+                    className={`min-h-[120px] border-b border-r border-[#E7E0D4] p-1.5 flex flex-col relative transition-colors ${
                       isToday
                         ? "bg-[#F1E7EE]/40"
                         : isWeekend
@@ -297,10 +341,9 @@ export default function CalendarViewPage() {
 
                     {/* Trip Event Bars */}
                     <div className="flex flex-col gap-0.5 flex-1 overflow-hidden">
-                      {cellEvents.slice(0, 3).map((evt) => {
+                      {cellEvents.slice(0, 1).map((evt) => {
                         const color = tripColorMap[evt.id];
                         const tripStart = new Date(evt.startDate);
-                        const tripEnd = new Date(evt.endDate);
                         const isFirstDayInMonth =
                           isSameDay(cellDate, tripStart) ||
                           (cellDate.getDate() === 1 && tripStart < cellDate);
@@ -309,18 +352,46 @@ export default function CalendarViewPage() {
                           <button
                             key={evt.id}
                             onClick={() => setSelectedTripId(evt.id)}
-                            className={`w-full text-left px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold truncate border cursor-pointer transition-all hover:brightness-90 ${color.bg} ${color.border} ${color.text}`}
-                            title={`${evt.name} — ${evt.cities.map((c) => c.name).join(", ")}`}
+                            className={`w-full text-left px-1.5 py-0.5 rounded text-[10px] font-semibold truncate border cursor-pointer transition-all hover:brightness-90 ${color.bg} ${color.border} ${color.text}`}
+                            title={`${evt.name}`}
                           >
-                            {isFirstDayInMonth ? evt.name.toUpperCase() : ""}
+                            {isFirstDayInMonth ? evt.name.toUpperCase() : "..."}
                           </button>
                         );
                       })}
-                      {cellEvents.length > 3 && (
-                        <span className="text-[10px] text-[#9A93A6] pl-1">
-                          +{cellEvents.length - 3} more
-                        </span>
-                      )}
+
+                      {/* Day Activities List inside Calendar Cell */}
+                      <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-[65px] custom-scrollbar">
+                        {dayActivities.slice(0, 3).map((act) => {
+                          const isFood = act.category?.toLowerCase() === "food";
+                          const isRelax = act.category?.toLowerCase() === "relaxation" || act.category?.toLowerCase() === "leisure";
+                          const badgeColor = isFood 
+                            ? "bg-[#FFF2ED] text-[#E0663D]" 
+                            : isRelax 
+                              ? "bg-[#EBF7F5] text-[#2F7A6F]" 
+                              : "bg-[#F1E7EE] text-[#714B67]";
+
+                          return (
+                            <div
+                              key={act.id}
+                              className="text-[9px] px-1 py-0.5 rounded border border-[#E7E0D4] bg-white flex items-center justify-between gap-1 shadow-2xs"
+                              title={`${act.startTime ? act.startTime.slice(0, 5) : "10:00"} - ${act.name}`}
+                            >
+                              <span className="font-medium truncate text-[#241B2F] max-w-[55px]">
+                                {act.name}
+                              </span>
+                              <span className={`text-[8px] scale-90 origin-right px-0.5 rounded font-bold shrink-0 ${badgeColor}`}>
+                                {act.category?.charAt(0).toUpperCase() || "A"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {dayActivities.length > 3 && (
+                          <span className="text-[8px] text-[#9A93A6] pl-1 font-semibold">
+                            +{dayActivities.length - 3} more
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -429,9 +500,9 @@ export default function CalendarViewPage() {
           />
 
           {/* Panel */}
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white border-l border-[#E7E0D4] shadow-xl z-50 overflow-y-auto animate-in slide-in-from-right-10">
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white border-l border-[#E7E0D4] shadow-xl z-50 overflow-y-auto animate-in slide-in-from-right-10 flex flex-col">
             {/* Panel Header */}
-            <div className="sticky top-0 bg-white border-b border-[#E7E0D4] px-6 py-4 flex items-center justify-between z-10">
+            <div className="bg-white border-b border-[#E7E0D4] px-6 py-4 flex items-center justify-between z-10 shrink-0">
               <h3 className={`${spaceGrotesk.className} text-[18px] font-bold text-[#241B2F]`}>
                 Trip Details
               </h3>
@@ -443,146 +514,288 @@ export default function CalendarViewPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Cover Photo */}
-              {selectedTrip.coverPhoto && (
-                <div className="rounded-xl overflow-hidden border border-[#E7E0D4] h-44">
-                  <img
-                    src={selectedTrip.coverPhoto}
-                    alt={selectedTrip.name}
-                    className="w-full h-full object-cover"
-                  />
+            {/* Tab navigation */}
+            <div className="flex border-b border-[#E7E0D4] bg-[#FAF8F5] px-6 shrink-0">
+              <button
+                onClick={() => setPanelTab("overview")}
+                className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all cursor-pointer ${
+                  panelTab === "overview"
+                    ? "border-[#714B67] text-[#714B67]"
+                    : "border-transparent text-[#5C5468] hover:text-[#241B2F]"
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setPanelTab("activities")}
+                className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  panelTab === "activities"
+                    ? "border-[#714B67] text-[#714B67]"
+                    : "border-transparent text-[#5C5468] hover:text-[#241B2F]"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Activities Timeline
+              </button>
+            </div>
+
+            {/* Panel Content (Scrollable) */}
+            <div className="flex-1 overflow-y-auto">
+              {panelTab === "overview" ? (
+                <div className="p-6 space-y-6">
+                  {/* Cover Photo */}
+                  {selectedTrip.coverPhoto && (
+                    <div className="rounded-xl overflow-hidden border border-[#E7E0D4] h-44">
+                      <img
+                        src={selectedTrip.coverPhoto}
+                        alt={selectedTrip.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Trip Name & Dates */}
+                  <div>
+                    <h2 className={`${spaceGrotesk.className} text-[22px] font-bold text-[#241B2F]`}>
+                      {selectedTrip.name}
+                    </h2>
+                    {selectedTrip.description && (
+                      <p className="text-[13px] text-[#5C5468] mt-1">{selectedTrip.description}</p>
+                    )}
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="flex items-center gap-3 p-4 bg-[#FAF8F5] rounded-lg border border-[#E7E0D4]">
+                    <CalendarIcon className="w-5 h-5 text-[#714B67] flex-shrink-0" />
+                    <div>
+                      <p className="text-[12px] font-semibold text-[#5C5468] uppercase">Travel Dates</p>
+                      <p className={`${ibmPlexMono.className} text-[14px] font-semibold text-[#241B2F] mt-0.5`}>
+                        {new Date(selectedTrip.startDate).toLocaleDateString("en-GB", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}{" "}
+                        →{" "}
+                        {new Date(selectedTrip.endDate).toLocaleDateString("en-GB", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${
+                        selectedTrip.status === "ongoing"
+                          ? "bg-[#EBF7F5] text-[#2F7A6F]"
+                          : selectedTrip.status === "upcoming"
+                            ? "bg-[#FFF2ED] text-[#E0663D]"
+                            : "bg-[#F1EDE6] text-[#5C5468]"
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          selectedTrip.status === "ongoing"
+                            ? "bg-[#2F7A6F] animate-pulse"
+                            : selectedTrip.status === "upcoming"
+                              ? "bg-[#E0663D]"
+                              : "bg-[#9A93A6]"
+                        }`}
+                      />
+                      {selectedTrip.status.charAt(0).toUpperCase() + selectedTrip.status.slice(1)}
+                    </span>
+
+                    {selectedTrip.isPublic && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F1E7EE] text-[#714B67] text-[11px] font-semibold">
+                        <Eye className="w-3 h-3" />
+                        Public
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D4] text-center">
+                      <p className="text-[10px] text-[#5C5468] uppercase font-semibold">Multi-City Stops</p>
+                      <p className={`${ibmPlexMono.className} text-[20px] font-bold text-[#241B2F] mt-1`}>
+                        {selectedTrip.stopsCount}
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D4] text-center">
+                      <p className="text-[10px] text-[#5C5468] uppercase font-semibold">Total Spend</p>
+                      <p className={`${ibmPlexMono.className} text-[20px] font-bold text-[#2F7A6F] mt-1`}>
+                        ${selectedTrip.totalExpense.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cities Visited */}
+                  {selectedTrip.cities.length > 0 && (
+                    <div>
+                      <h4 className="text-[13px] font-semibold text-[#5C5468] uppercase mb-3">
+                        Cities in Itinerary
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedTrip.cities.map((city, idx) => (
+                          <div
+                            key={city.id + idx}
+                            className="flex items-center gap-3 p-3 rounded-lg border border-[#E7E0D4] bg-white hover:bg-[#FAF8F5] transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-[#F1E7EE] text-[#714B67] flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-[#241B2F]">{city.name}</p>
+                              <p className="text-[11px] text-[#5C5468]">{city.country}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className={`${ibmPlexMono.className} text-[11px] text-[#5C5468]`}>
+                                {new Date(city.startDate).toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                })}{" "}
+                                –{" "}
+                                {new Date(city.endDate).toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* Trip Name & Dates */}
-              <div>
-                <h2 className={`${spaceGrotesk.className} text-[22px] font-bold text-[#241B2F]`}>
-                  {selectedTrip.name}
-                </h2>
-                {selectedTrip.description && (
-                  <p className="text-[13px] text-[#5C5468] mt-1">{selectedTrip.description}</p>
-                )}
-              </div>
-
-              {/* Date Range */}
-              <div className="flex items-center gap-3 p-4 bg-[#FAF8F5] rounded-lg border border-[#E7E0D4]">
-                <CalendarIcon className="w-5 h-5 text-[#714B67] flex-shrink-0" />
-                <div>
-                  <p className="text-[12px] font-semibold text-[#5C5468] uppercase">Travel Dates</p>
-                  <p className={`${ibmPlexMono.className} text-[14px] font-semibold text-[#241B2F] mt-0.5`}>
-                    {new Date(selectedTrip.startDate).toLocaleDateString("en-GB", {
-                      weekday: "short",
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}{" "}
-                    →{" "}
-                    {new Date(selectedTrip.endDate).toLocaleDateString("en-GB", {
-                      weekday: "short",
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Badge */}
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${
-                    selectedTrip.status === "ongoing"
-                      ? "bg-[#EBF7F5] text-[#2F7A6F]"
-                      : selectedTrip.status === "upcoming"
-                        ? "bg-[#FFF2ED] text-[#E0663D]"
-                        : "bg-[#F1EDE6] text-[#5C5468]"
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      selectedTrip.status === "ongoing"
-                        ? "bg-[#2F7A6F] animate-pulse"
-                        : selectedTrip.status === "upcoming"
-                          ? "bg-[#E0663D]"
-                          : "bg-[#9A93A6]"
-                    }`}
-                  />
-                  {selectedTrip.status.charAt(0).toUpperCase() + selectedTrip.status.slice(1)}
-                </span>
-
-                {selectedTrip.isPublic && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F1E7EE] text-[#714B67] text-[11px] font-semibold">
-                    <Eye className="w-3 h-3" />
-                    Public
-                  </span>
-                )}
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D4] text-center">
-                  <p className="text-[10px] text-[#5C5468] uppercase font-semibold">Multi-City Stops</p>
-                  <p className={`${ibmPlexMono.className} text-[20px] font-bold text-[#241B2F] mt-1`}>
-                    {selectedTrip.stopsCount}
-                  </p>
-                </div>
-                <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D4] text-center">
-                  <p className="text-[10px] text-[#5C5468] uppercase font-semibold">Total Spend</p>
-                  <p className={`${ibmPlexMono.className} text-[20px] font-bold text-[#2F7A6F] mt-1`}>
-                    ${selectedTrip.totalExpense.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Cities Visited */}
-              {selectedTrip.cities.length > 0 && (
-                <div>
-                  <h4 className="text-[13px] font-semibold text-[#5C5468] uppercase mb-3">
-                    Cities in Itinerary
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedTrip.cities.map((city, idx) => (
-                      <div
-                        key={city.id + idx}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-[#E7E0D4] bg-white hover:bg-[#FAF8F5] transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-[#F1E7EE] text-[#714B67] flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-[#241B2F]">{city.name}</p>
-                          <p className="text-[11px] text-[#5C5468]">{city.country}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`${ibmPlexMono.className} text-[11px] text-[#5C5468]`}>
-                            {new Date(city.startDate).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                            })}{" "}
-                            –{" "}
-                            {new Date(city.endDate).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                            })}
+              ) : (
+                <div className="p-6 space-y-5">
+                  {isTimelineLoading ? (
+                    <div className="py-12 text-center text-[#5C5468]">
+                      <div className="w-6 h-6 border-2 border-[#714B67]/20 border-t-[#714B67] rounded-full animate-spin mx-auto mb-2" />
+                      Loading activities...
+                    </div>
+                  ) : !timelineData || !timelineData.days || timelineData.days.length === 0 ? (
+                    <div className="py-12 text-center text-[#5C5468]">
+                      <p className="text-[13px]">No day-wise timeline available.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Header summary info */}
+                      <div className="flex items-center justify-between border-b border-[#E7E0D4] pb-3">
+                        <div>
+                          <p className="text-[13px] font-bold text-[#241B2F]">
+                            {timelineData.totalDays} {timelineData.totalDays === 1 ? "Day" : "Days"} Itinerary
+                          </p>
+                          <p className="text-[11px] text-[#5C5468] mt-0.5">
+                            {new Date(timelineData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(timelineData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
                         </div>
+                        <span className="px-2.5 py-1 rounded-full bg-[#F1E7EE] text-[#714B67] text-[11px] font-bold">
+                          {timelineData.days.reduce((acc: number, d: any) => acc + (d.activities?.length || 0), 0)} Activities
+                        </span>
                       </div>
-                    ))}
-                  </div>
+
+                      {/* Day-by-day blocks */}
+                      <div className="space-y-4">
+                        {timelineData.days.map((day: any) => {
+                          const dayDateStr = new Date(day.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          });
+
+                          return (
+                            <div key={day.dayNumber} className="border border-[#E7E0D4] rounded-xl bg-[#FAF8F5] p-4 space-y-3">
+                              {/* Day Header */}
+                              <div className="flex justify-between items-center text-[12px] font-semibold text-[#5C5468] border-b border-[#E7E0D4]/60 pb-2">
+                                <span>DAY {day.dayNumber} • {dayDateStr.toUpperCase()}</span>
+                                <span className="text-[11px] text-[#9A93A6] bg-white border border-[#E7E0D4] px-2 py-0.5 rounded-full">
+                                  {day.activities?.length || 0} {day.activities?.length === 1 ? "item" : "items"}
+                                </span>
+                              </div>
+
+                              {/* Activities in Day */}
+                              {(!day.activities || day.activities.length === 0) ? (
+                                <p className="text-[11px] text-[#9A93A6] italic py-1">
+                                  No activities scheduled.
+                                </p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {day.activities.map((act: any) => {
+                                    // Category badge styles
+                                    const isFood = act.category?.toLowerCase() === "food";
+                                    const isRelax = act.category?.toLowerCase() === "relaxation" || act.category?.toLowerCase() === "leisure";
+                                    const badgeClass = isFood 
+                                      ? "bg-[#FFF2ED] text-[#E0663D]" 
+                                      : isRelax 
+                                        ? "bg-[#EBF7F5] text-[#2F7A6F]" 
+                                        : "bg-[#F1E7EE] text-[#714B67]";
+
+                                    return (
+                                      <div key={act.id} className="flex items-center justify-between p-2.5 rounded-lg border border-[#E7E0D4] bg-white shadow-xs">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                          <div className="flex items-center gap-1 text-[11px] font-semibold text-[#5C5468] bg-[#FAF8F5] border border-[#E7E0D4] px-1.5 py-0.5 rounded">
+                                            <Clock className="w-3 h-3 text-[#714B67]" />
+                                            {act.startTime ? act.startTime.slice(0, 5) : "10:00"}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <p className="text-[12px] font-semibold text-[#241B2F] truncate">
+                                              {act.name}
+                                            </p>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                              <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${badgeClass}`}>
+                                                {act.category || "ACTIVITY"}
+                                              </span>
+                                              {act.cityName && (
+                                                <span className="text-[9px] text-[#9A93A6] truncate">
+                                                  in {act.cityName}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className={`${ibmPlexMono.className} text-[12px] font-bold text-[#2F7A6F] shrink-0`}>
+                                          {act.cost > 0 ? `$${act.cost}` : "Free"}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Day Summary Cost if applicable */}
+                              {day.dayTotalExpenses > 0 && (
+                                <div className="flex justify-between items-center text-[10px] text-[#5C5468] pt-1.5">
+                                  <span>Day Extra Spend</span>
+                                  <span className={`${ibmPlexMono.className} font-semibold text-[#C0392B]`}>
+                                    +${day.dayTotalExpenses}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-[#E7E0D4]">
-                <button
-                  onClick={() => router.push(`/trips/${selectedTrip.id}`)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-colors cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Full Itinerary
-                </button>
-              </div>
+            {/* Footer Buttons */}
+            <div className="p-6 border-t border-[#E7E0D4] bg-[#FAF8F5] shrink-0">
+              <button
+                onClick={() => router.push(`/trips/${selectedTrip.id}`)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#714B67] hover:bg-[#4E3347] text-white text-[13px] font-semibold transition-colors cursor-pointer"
+              >
+                <Eye className="w-4 h-4" />
+                View Full Itinerary
+              </button>
             </div>
           </div>
         </>

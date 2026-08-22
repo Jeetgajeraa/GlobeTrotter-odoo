@@ -61,28 +61,29 @@ export const createTrip = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // ── One-trip-at-a-time rule ──────────────────────────────────────
-    // A user cannot create a new trip while they have an ongoing trip.
-    // They must wait for the current trip to end (endDate < now).
-    const now = new Date();
-    const ongoingTrip = await prisma.trip.findFirst({
+    // ── Trip Overlap Validation ──────────────────────────────────────
+    // Check if the user has any existing trip whose date range overlaps with the new trip
+    const overlappingTrip = await prisma.trip.findFirst({
       where: {
         userId,
-        startDate: { lte: now },
-        endDate:   { gte: now },
+        startDate: { lte: parsedEndDate },
+        endDate:   { gte: parsedStartDate },
       },
-      select: { id: true, name: true, endDate: true },
+      select: { id: true, name: true, startDate: true, endDate: true },
     });
 
-    if (ongoingTrip) {
-      const endStr = ongoingTrip.endDate.toLocaleDateString('en-GB', {
+    if (overlappingTrip) {
+      const startStr = overlappingTrip.startDate.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      const endStr = overlappingTrip.endDate.toLocaleDateString('en-GB', {
         day: '2-digit', month: 'short', year: 'numeric',
       });
       res.status(409).json(
         createResponse(
           false,
-          `You already have an ongoing trip "${ongoingTrip.name}" (ends ${endStr}). Please complete it before creating a new trip.`,
-          { ongoingTripId: ongoingTrip.id, ongoingTripName: ongoingTrip.name }
+          `This trip overlaps with your existing trip "${overlappingTrip.name}" (${startStr} – ${endStr}). Please choose different dates.`,
+          { overlappingTripId: overlappingTrip.id, overlappingTripName: overlappingTrip.name }
         )
       );
       return;
@@ -358,6 +359,34 @@ export const updateTrip = async (req: Request, res: Response): Promise<void> => 
     const finalEnd = updateData.endDate || existingTrip.endDate;
     if (finalStart > finalEnd) {
       res.status(400).json(createResponse(false, 'Start date cannot be after end date', null));
+      return;
+    }
+
+    // Validate overlap with other trips
+    const overlappingTrip = await prisma.trip.findFirst({
+      where: {
+        userId,
+        id: { not: tripId },
+        startDate: { lte: finalEnd },
+        endDate:   { gte: finalStart },
+      },
+      select: { id: true, name: true, startDate: true, endDate: true },
+    });
+
+    if (overlappingTrip) {
+      const startStr = overlappingTrip.startDate.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      const endStr = overlappingTrip.endDate.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+      res.status(409).json(
+        createResponse(
+          false,
+          `Updating this trip's dates would overlap with your existing trip "${overlappingTrip.name}" (${startStr} – ${endStr}). Please choose different dates.`,
+          { overlappingTripId: overlappingTrip.id, overlappingTripName: overlappingTrip.name }
+        )
+      );
       return;
     }
 
