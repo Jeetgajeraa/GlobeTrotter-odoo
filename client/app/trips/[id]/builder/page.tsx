@@ -27,14 +27,14 @@ const ibmPlexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["500", "600"] }
 /* ── Category Styling ── */
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   SIGHTSEEING: { bg: "#EFF6FF", text: "#2563EB", border: "#BFDBFE" },
-  ADVENTURE:   { bg: "#FFF7ED", text: "#EA580C", border: "#FED7AA" },
-  NIGHTLIFE:   { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
-  CULTURE:     { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
-  FOOD:        { bg: "#FFF1F2", text: "#E11D48", border: "#FECDD3" },
-  RELAXATION:  { bg: "#F0FDFA", text: "#0D9488", border: "#99F6E4" },
-  SHOPPING:    { bg: "#FEFCE8", text: "#CA8A04", border: "#FEF08A" },
-  TRANSPORT:   { bg: "#F8FAFC", text: "#475569", border: "#E2E8F0" },
-  OTHER:       { bg: "#FAF8F5", text: "#5C5468", border: "#E7E0D4" },
+  ADVENTURE: { bg: "#FFF7ED", text: "#EA580C", border: "#FED7AA" },
+  NIGHTLIFE: { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+  CULTURE: { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
+  FOOD: { bg: "#FFF1F2", text: "#E11D48", border: "#FECDD3" },
+  RELAXATION: { bg: "#F0FDFA", text: "#0D9488", border: "#99F6E4" },
+  SHOPPING: { bg: "#FEFCE8", text: "#CA8A04", border: "#FEF08A" },
+  TRANSPORT: { bg: "#F8FAFC", text: "#475569", border: "#E2E8F0" },
+  OTHER: { bg: "#FAF8F5", text: "#5C5468", border: "#E7E0D4" },
 };
 
 function extractCities(resData: unknown): City[] {
@@ -379,17 +379,18 @@ export default function ItineraryBuilderPage() {
           1. TOP APP BAR / HEADER
          ════════════════════════════════════════════════════════════ */}
       <header className="w-full border-b border-[#E7E0D4] bg-white/95 backdrop-blur-md sticky top-0 z-40 px-5 sm:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_2px_10px_rgba(36,27,47,0.03)]">
-        
+
         {/* Left: Back & Trip Info */}
         <div className="flex items-center gap-3.5">
           <Link
-            href="/"
+            href={`/trips/${tripId}`}
             className="text-[13px] font-semibold text-[#714B67] hover:text-[#4E3347] transition-colors flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-[#F1E7EE]"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Dashboard
+            Back to Itinerary
+
           </Link>
 
           <span className="text-[#D6CCBC] text-base font-light">/</span>
@@ -478,19 +479,17 @@ export default function ItineraryBuilderPage() {
                   <div
                     key={stop.id}
                     onClick={() => setSelectedStopId(stop.id)}
-                    className={`relative pl-10 pr-3.5 py-3 rounded-xl border cursor-pointer transition-all duration-150 ${
-                      isSelected
+                    className={`relative pl-10 pr-3.5 py-3 rounded-xl border cursor-pointer transition-all duration-150 ${isSelected
                         ? "bg-[#FAF8F5] border-[#714B67] shadow-[0_2px_12px_rgba(113,75,103,0.12)] ring-1 ring-[#714B67]"
                         : "bg-white border-[#E7E0D4] hover:border-[#D6CCBC] hover:bg-[#FAF8F5]/60"
-                    }`}
+                      }`}
                   >
                     {/* Route Line Marker Node */}
                     <div
-                      className={`absolute left-3 top-4 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                        isSelected
+                      className={`absolute left-3 top-4 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
                           ? "bg-[#714B67] border-white ring-2 ring-[#714B67]"
                           : "bg-white border-[#E0663D]"
-                      }`}
+                        }`}
                     >
                       {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
@@ -890,18 +889,16 @@ export default function ItineraryBuilderPage() {
                 <button
                   type="button"
                   onClick={() => setActivityMode("catalog")}
-                  className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${
-                    activityMode === "catalog" ? "bg-[#714B67] text-white" : "bg-[#F1EDE6] text-[#5C5468]"
-                  }`}
+                  className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${activityMode === "catalog" ? "bg-[#714B67] text-white" : "bg-[#F1EDE6] text-[#5C5468]"
+                    }`}
                 >
                   Explore City Catalog
                 </button>
                 <button
                   type="button"
                   onClick={() => setActivityMode("custom")}
-                  className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${
-                    activityMode === "custom" ? "bg-[#714B67] text-white" : "bg-[#F1EDE6] text-[#5C5468]"
-                  }`}
+                  className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${activityMode === "custom" ? "bg-[#714B67] text-white" : "bg-[#F1EDE6] text-[#5C5468]"
+                    }`}
                 >
                   Custom Activity
                 </button>
@@ -920,9 +917,8 @@ export default function ItineraryBuilderPage() {
                           <div
                             key={act.id}
                             onClick={() => setPickedActivityId(act.id)}
-                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                              isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
-                            }`}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${isPicked ? "bg-[#F1E7EE] border-[#714B67]" : "bg-[#FAF8F5] border-[#E7E0D4] hover:border-[#D6CCBC]"
+                              }`}
                           >
                             <div>
                               <p className="text-[13px] font-bold text-[#241B2F]">{act.name}</p>

@@ -167,26 +167,26 @@ export function CreatePostModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-[#FAF8F5] w-full max-w-[580px] rounded-2xl border border-[#E7E0D4] shadow-[0_4px_24px_rgba(36,27,47,0.15)] overflow-hidden my-8"
+        className="bg-[#FAF8F5] w-full max-w-[520px] max-h-[92vh] flex flex-col rounded-2xl border border-[#E7E0D4] shadow-[0_4px_24px_rgba(36,27,47,0.15)] overflow-hidden my-auto animate-[cardIn_0.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Modal Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E7E0D4] bg-white">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E7E0D4] bg-white shrink-0">
           <div>
-            <h2 className={`text-[19px] font-bold text-[#241B2F] ${spaceGrotesk.className}`}>
+            <h2 className={`text-[17px] font-bold text-[#241B2F] ${spaceGrotesk.className}`}>
               Create Community Post
             </h2>
-            <p className="text-[13px] text-[#5C5468]">
-              Share your travel experience, recommendations, and stories.
+            <p className="text-[12px] text-[#5C5468]">
+              Share travel tips, stories, and recommendations with explorers.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[#9A93A6] hover:text-[#241B2F] hover:bg-[#F1EDE6] transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[#9A93A6] hover:text-[#241B2F] hover:bg-[#F1EDE6] transition-colors cursor-pointer text-sm"
             aria-label="Close modal"
           >
             ✕
@@ -194,10 +194,10 @@ export function CreatePostModal({
         </div>
 
         {/* ── Modal Body / Form ── */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
           {/* Post Title */}
           <div>
-            <label className={`block text-[13px] font-semibold text-[#241B2F] mb-1.5 ${inter.className}`}>
+            <label className={`block text-[12px] font-semibold text-[#241B2F] mb-1 ${inter.className}`}>
               Post Title <span className="text-[#E0663D]">*</span>
             </label>
             <input
@@ -205,7 +205,7 @@ export function CreatePostModal({
               placeholder="e.g. Hidden gems in Kyoto you must visit!"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0D4] bg-white text-[#241B2F] placeholder-[#9A93A6] text-[14px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all"
+              className="w-full px-3 py-2 rounded-lg border border-[#E7E0D4] bg-white text-[#241B2F] placeholder-[#9A93A6] text-[13.5px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all"
               maxLength={120}
               required
             />
@@ -213,22 +213,22 @@ export function CreatePostModal({
 
           {/* Post Content */}
           <div>
-            <label className={`block text-[13px] font-semibold text-[#241B2F] mb-1.5 ${inter.className}`}>
+            <label className={`block text-[12px] font-semibold text-[#241B2F] mb-1 ${inter.className}`}>
               Content <span className="text-[#E0663D]">*</span>
             </label>
             <textarea
-              rows={4}
+              rows={3}
               placeholder="Share details, food spots, tips, budget advice, or highlights..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0D4] bg-white text-[#241B2F] placeholder-[#9A93A6] text-[14px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-[#E7E0D4] bg-white text-[#241B2F] placeholder-[#9A93A6] text-[13.5px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all resize-none"
               required
             />
           </div>
 
-          {/* Photo File Upload */}
+          {/* Photo File Upload (Compact Preview) */}
           <div>
-            <label className={`block text-[13px] font-semibold text-[#241B2F] mb-1.5 ${inter.className}`}>
+            <label className={`block text-[12px] font-semibold text-[#241B2F] mb-1 ${inter.className}`}>
               Attach Photo <span className="text-[11px] font-normal text-[#9A93A6]">(Optional)</span>
             </label>
 
@@ -245,24 +245,34 @@ export function CreatePostModal({
             />
 
             {imagePreviewUrl ? (
-              <div className="relative rounded-xl border border-[#E7E0D4] overflow-hidden bg-[#F1EDE6] group">
-                <img
-                  src={imagePreviewUrl}
-                  alt="Preview"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              <div className="flex items-center gap-3 p-2 bg-white rounded-xl border border-[#E7E0D4]">
+                <div className="w-13 h-13 rounded-lg overflow-hidden border border-[#E7E0D4] bg-[#F1EDE6] shrink-0">
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#241B2F] truncate">
+                    {imageFile ? imageFile.name : "Attached Image"}
+                  </p>
+                  <p className="text-[11px] text-[#9A93A6]">
+                    {imageFile ? `${(imageFile.size / 1024 / 1024).toFixed(2)} MB` : "Ready to upload"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1.5 bg-white text-[#241B2F] rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 text-[11.5px] font-medium text-[#714B67] bg-[#F1E7EE] hover:bg-[#E7D6E2] rounded-lg transition-colors cursor-pointer"
                   >
-                    Change Image
+                    Change
                   </button>
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="px-3 py-1.5 bg-[#C0392B] text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 text-[11.5px] font-medium text-[#C0392B] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                   >
                     Remove
                   </button>
@@ -277,38 +287,37 @@ export function CreatePostModal({
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                className={`border border-dashed rounded-xl py-2.5 px-3 text-center cursor-pointer transition-all flex items-center justify-center gap-2.5 ${
                   isDragging
-                    ? "border-[#714B67] bg-[#F1E7EE]/40"
+                    ? "border-[#714B67] bg-[#F1E7EE]/50"
                     : "border-[#D6CCBC] bg-white hover:bg-[#F1EDE6]/40 hover:border-[#714B67]/60"
                 }`}
               >
-                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#F1E7EE] text-[#714B67] flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-7 h-7 rounded-full bg-[#F1E7EE] text-[#714B67] flex items-center justify-center shrink-0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
                 </div>
-                <p className="text-[13px] font-medium text-[#241B2F]">
-                  <span className="text-[#714B67] font-semibold underline">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-[11px] text-[#9A93A6] mt-1">
-                  Supports JPG, PNG, WEBP (Max 10MB)
-                </p>
+                <div className="text-left text-[12px]">
+                  <span className="text-[#714B67] font-semibold underline">Click to upload photo</span>
+                  <span className="text-[#5C5468]"> or drag & drop</span>
+                  <span className="text-[#9A93A6] text-[11px] ml-1.5">(PNG, JPG up to 10MB)</span>
+                </div>
               </div>
             )}
           </div>
 
           {/* Optional Linked Trip */}
           <div>
-            <label className={`block text-[13px] font-semibold text-[#241B2F] mb-1.5 ${inter.className}`}>
+            <label className={`block text-[12px] font-semibold text-[#241B2F] mb-1 ${inter.className}`}>
               Link a Trip <span className="text-[11px] font-normal text-[#9A93A6]">(Optional)</span>
             </label>
             <select
               value={selectedTripId}
               onChange={(e) => setSelectedTripId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0D4] bg-white text-[#241B2F] text-[14px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg border border-[#E7E0D4] bg-white text-[#241B2F] text-[13.5px] focus:outline-none focus:border-[#714B67] focus:ring-2 focus:ring-[#F1E7EE] transition-all cursor-pointer"
             >
               <option value="">-- No trip linked --</option>
               {loadingTrips ? (
@@ -324,23 +333,23 @@ export function CreatePostModal({
           </div>
 
           {/* ── Modal Footer Actions ── */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E7E0D4]">
+          <div className="flex items-center justify-end gap-2.5 pt-2.5 border-t border-[#E7E0D4] shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl text-[14px] font-medium text-[#5C5468] hover:bg-[#F1EDE6] transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-[#5C5468] hover:bg-[#F1EDE6] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 rounded-xl text-[14px] font-semibold bg-[#714B67] text-white hover:bg-[#4E3347] shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2 rounded-lg text-[13.5px] font-semibold bg-[#714B67] text-white hover:bg-[#4E3347] shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                   </svg>
